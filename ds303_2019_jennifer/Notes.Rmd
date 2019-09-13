@@ -162,6 +162,14 @@ ggplot(hdi_2017) +
   geom_point(aes(x = GDP_total, y = HDI)) # highly skewed
 
 ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP_total, y = HDI)) + 
+  xlim(c(0, 5000))
+
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP_total, y = HDI)) + 
+  xlim(c(0, 500))
+
+ggplot(hdi_2017) + 
   geom_point(aes(x = log10(GDP_total), y = HDI))
 
 ggplot(hdi_2017) + 
@@ -186,6 +194,44 @@ ggplot(hdi_2017) +
   geom_point(aes(x = `Education index`, y = HDI))
 ```
 
+```{r}
+mdata <- select(hdi_2017, Country, HDI, life_expectancy = `Life expectancy at birth`) %>%
+  na.omit()
+model <- lm(HDI ~ life_expectancy, data = mdata)
+
+summary(model)
+
+ggplot(mdata, aes(x = life_expectancy, y = HDI)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = F)
+```
+
 Once you've selected a model which accounts for the features you identified during EDA, visual diagnostics can help identify violations of model assumptions, areas of poor fit or where model predictions might be poor. 
 
+```{r}
+mdata$predict <- predict(model, mdata)
+mdata$error <- resid(model)
 
+ggplot(mdata, aes(x = life_expectancy, y = error)) + 
+  geom_point()
+```
+
+It can help to bin the x-variable to examine whether the variability of residuals changes with x. Generally the goal is to cut the data into sets of equal size; this prevents bins with a lot of points from looking highly variable.
+
+```{r}
+
+mdata$life_expectancy_groups <- cut_width(mdata$life_expectancy, 5, center = 52.5)
+
+ggplot(mdata, aes(x = life_expectancy_groups, 
+                  y = error)) + 
+  geom_jitter(alpha = .5) + 
+  geom_boxplot(alpha = .5)
+
+
+mdata$life_expectancy_groups_equal_n <- cut_number(mdata$life_expectancy, 10)
+
+ggplot(mdata, aes(x = life_expectancy_groups_equal_n, 
+                  y = error)) + 
+  geom_boxplot()
+
+```
