@@ -183,6 +183,7 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
                              "Overall loss in HDI.*" = "Ineq_HDI_Loss",
                              "Population ages ([\\d-–]*).*\\(millions\\)" = "Pop_\\1",
                              "Population under age 5.*" = "Pop_under5",
+                             "Population with at least some secondary education,? ?([a-z]{1,})? ?\\(?.*" = "School_Secondary_Pop_Pct_\\1",
                              "Private capital flows.*" = "Private_capital_flows_PctGDP",
                              "Red List Index.*" = "Idx_Red_List",
                              "Refugees by country of origin.*" = "Refugees_from_country_1000s",
@@ -191,8 +192,9 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
                              "Share of employment in nonagriculture, female.*" = "Empl_Nonagriculture_Pct_Female",
                              "Share of seats in parliament.*" = "Parlaiment_Pct_Female",
                              "Total population.*" = "Pop_Total",
+                             "Total unemployment rate.*" = "Unemployment_FtoM_Ratio",
                              "Unemployment, (total|youth).*" = "Unemployment_\\1",
-                             "Urban population" = "Pop_Urban_Pct",
+                             "Urban population.*" = "Pop_Urban_Pct",
                              "Vulnerable employment.*" = "Empl_Vulnerable_Pct",
                              "Women with account at .*" = "Female_Bank_Acct_Pct",
                              "Working poor at .*" = "Working_Poor_Pct_3.10day",
@@ -200,11 +202,30 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
                              "Youth unemployment rate.*" = "Youth_Unemployment_FtoM")
            ) %>%
            str_remove_all("[_ ]{1,}$") %>%
-           str_replace_all("[, ]{1,}", "_")) %>%
-  select(-indicator_id, -indicator_name) %>%
+           str_replace_all("[, ]{1,}", "_"),
+         Country = str_remove(country_name, " \\(Plurinational State of\\)") %>%
+           str_replace("Congo .*", "Democratic Republic of the Congo") %>%
+           str_replace("^Congo$", "Republic of the Congo") %>%
+           str_replace("Côte d'Ivoire", "Ivory Coast") %>%
+           str_replace("Czechia", "Czech Republic") %>%
+           str_replace("Gambia", "The Gambia") %>%
+           str_replace("Hong Kong.*", "Hong Kong") %>%
+           str_replace("Iran.*", "Iran") %>%
+           str_replace("Korea \\(Republic of\\)", "South Korea") %>%
+           str_replace("Lao People's Democratic Republic", "Laos") %>%
+           str_replace("Moldova.*", "Moldova") %>%
+           str_replace("The former Yugoslav.*", "North Macedonia") %>%
+           str_replace("Myanmar", "Burma Myanmar") %>%
+           str_replace("Palestine.*", "State of Palestine") %>%
+           str_replace("Russian Federation", "Russia") %>%
+           str_replace("Syrian Arab Republic", "Syria") %>%
+           str_replace("Eswatini.*", "Swaziland") %>%
+           str_replace("Tanzania.*", "Tanzania") %>%
+           str_replace("Venezuela.*", "Venezuela") %>%
+           str_replace("Viet Nam", "Vietnam")) %>%
+  ungroup() %>%
+  select(year, Country, name, value) %>%
   tidyr::spread(key = name, value = value)
-
-write_csv(hdi_2017, path = "ds303_2019/2017_Human_Dev_Index.csv")
 
 qplot(`Human Development Index, female`, `Human Development Index, male`, data = hdi_2017) +
   geom_abline(slope = 1, intercept = 0) +
@@ -219,10 +240,12 @@ world_happiness_index <- rvest::html_table(xml2::read_html(url)) %>%
   `[[`(1) %>%
   as_tibble(.name_repair = "unique") %>%
   select(1:3) %>%
-  mutate(Country = str_remove_all(Countries, " [[:punct:]]{1,}"),
+  mutate(Country = str_remove_all(Countries, " [[:punct:]+]{1,}") %>% str_trim(),
          Happiness_Rank = str_remove_all(`World Happiness Ranking`, "\\D") %>% parse_number(),
          Happiness_Index = `World Happiness Index...3`) %>%
   select(-matches(" "), -Countries)
 
+hdi_2017 <- left_join(world_happiness_index, hdi_2017,  by = c("Country" = "Country"))
+write_csv(hdi_2017, path = "ds303_2019/2017_Human_Dev_Index.csv")
 
 # ------------------------------------------------------------------------------
