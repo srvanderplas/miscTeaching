@@ -195,7 +195,9 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
                              "Working poor at .*" = "Working_Poor_Pct_3.10day",
                              "Young age.* dependency ratio.*" = "Young_Dependency_Pct",
                              "Youth unemployment rate.*" = "Youth_Unemployment_FtoM")
-           )) %>%
+           ) %>%
+           str_remove("_$") %>%
+           str_replace_all(" ", "_")) %>%
   select(-indicator_id, -indicator_name) %>%
   tidyr::spread(key = name, value = value)
 
