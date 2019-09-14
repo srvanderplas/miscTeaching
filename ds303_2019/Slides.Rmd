@@ -235,3 +235,12 @@ Visualization is an art as well as a science, and requires thinking critically a
 
 The United Nations maintains a dataset with quality-of-life indicators for most countries in the world. You can explore the data [here](http://hdr.undp.org/en/data). 
 
+We will work with the Human Development Index, and try to predict it based on other factors.
+
+```{r}
+library(tidyverse)
+
+hdi_2017 <- read_csv()
+
+```
+

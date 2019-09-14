@@ -1,6 +1,6 @@
-download.file("http://www.who.int/entity/immunization/monitoring_surveillance/data/coverage_estimates_series.xls", destfile = "ds303_2019/WHO_Vaccination_Rates.xls", mode = "wb")
-download.file("https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/EXCEL_FILES/1_Population/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx", destfile = "ds303_2019/World_Population_Rate.xlsx", mode = "wb")
-download.file("http://ec2-54-174-131-205.compute-1.amazonaws.com/API/hdro_api_all.json", "ds303_2019/human_dev_index.json")
+# download.file("http://www.who.int/entity/immunization/monitoring_surveillance/data/coverage_estimates_series.xls", destfile = "ds303_2019/WHO_Vaccination_Rates.xls", mode = "wb")
+# download.file("https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/EXCEL_FILES/1_Population/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx", destfile = "ds303_2019/World_Population_Rate.xlsx", mode = "wb")
+# download.file("http://ec2-54-174-131-205.compute-1.amazonaws.com/API/hdro_api_all.json", "ds303_2019/human_dev_index.json")
 
 library(readxl)
 library(tidyverse)
@@ -24,7 +24,7 @@ vaccination_by_year <- who_vaccine_data %>%
 vaccination_by_year %>%
   filter(Vaccine == "MCV1") %>%
   mutate(Region = str_replace_all(Region, c("AFR" = "Africa", "AMR" = "Americas", "EMR" = "Eastern Mediterranean", "EUR" = "Europe", "SEAR" = "SE Asia", "WPR" = "Western Pacific"))) %>%
-ggplot(aes(x = year, y = rate, group = interaction(Cname, Vaccine))) +
+  ggplot(aes(x = year, y = rate, group = interaction(Cname, Vaccine))) +
   geom_line() +
   geom_smooth(aes(x = year, y = rate), inherit.aes = F) +
   facet_wrap(~Region) +
@@ -41,9 +41,9 @@ who_agg_vaccination <- who_vaccine_aggregate %>%
 
 who_agg_vaccination %>%
   mutate(Affiliation = str_replace_all(Affilifation, c("AFR" = "Africa", "AMR" = "Americas",
-                                                 "EMR" = "Eastern Mediterranean",
-                                                 "EUR" = "Europe", "SEAR|sear" = "Southeast Asia",
-                                                 "WPR|wpr" = "Western Pacific"))) %>%
+                                                       "EMR" = "Eastern Mediterranean",
+                                                       "EUR" = "Europe", "SEAR|sear" = "Southeast Asia",
+                                                       "WPR|wpr" = "Western Pacific"))) %>%
   mutate(Affiliation = str_to_title(Affiliation) %>%
            factor(levels = c("Africa", "Americas", "Eastern Mediterranean", "Europe",
                              "Southeast Asia", "Western Pacific",
@@ -151,11 +151,55 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
   select(-n_countries) %>%
   mutate(name = indicator_name %>%
            str_remove_all(" ?\\([A-Z]{1,}\\)") %>%
-           str_remove_all(" \\(years\\)")) %>%
+           str_remove_all(" \\(years\\)") %>%
+           str_replace_all(c("Adolescent birth.*" = "Teen_Birth_Rate",
+                             "Coefficient of human inequality" = "Coef_Human_Inequality",
+                             "Domestic credit.*" = "Financial_Sector_Domestic_Credit_PctGDP",
+                             "Education index" = "Idx_Education",
+                             "Employment in agricul.*" = "Empl_Agriculture",
+                             "Employment in services.*" = "Empl_Services",
+                             "Employment to population.*" = "Empl_Pop_Ratio",
+                             "Estimated gross national income per capita, (.*) \\(.*$" = "GNIpc_\\1",
+                             "Expected years of schooling,? ?(.*)? .years." =  "Expected_Years_School_\\1",
+                             "Gender (.*) Index.*" = "Idx_Gender_\\1",
+                             "Gross capital.*" = "Gross_Capital_PctGDP",
+                             "Gross domestic product.*" = "GDP",
+                             "Gross fixed capital.*" = "Gross_Fixed_Capital_PctGDP",
+                             "Gross national income.*" = "Gross_National_Income",
+                             "HDI rank" = "HDI_rank",
+                             "Human Development Index,? ?(.*)?" = "Idx_Human_Development_\\1",
+                             "Income index" = "Idx_Income",
+                             "[Ll]ife expectancy" = "Life_Exp",
+                             "Inequality-adjusted (.*) .?(?:IHDI|index).*" = "Idx_IneqAdj_\\1",
+                             "Inequality in (.*)" = "Ineq_\\1",
+                             "Infants lacking immunization, ([A-z]*).*" = "Infants_Missing_\\1_Vaccine",
+                             "Labour force participation rate .. ages 15 and older.,? ?(.*)?" = "Labor_Participation_\\1",
+                             "Life_Exp at birth,? ?(.*) ?.*" = "Life_Exp_Birth_\\1",
+                             "Mean years of schooling,? ?([a-z]*).*" = "School_AvgYears_\\1",
+                             "Old-age.* dependency.*" = "Elderly_Dependency_Pct",
+                             "Overall loss in HDI.*" = "Ineq_HDI_Loss",
+                             "Population ages ([\\d-]) .*\\(millions\\)" = "Pop_\\1",
+                             "Population under age 5.*" = "Pop_under5",
+                             "Private capital flows.*" = "Private_capital_flows_PctGDP",
+                             "Red List Index.*" = "Idx_Red_List",
+                             "Refugees by country of origin.*" = "Refugees_from_country_1000s",
+                             "Remittances, inflows.*" = "Remittances_inflows_PctGDP",
+                             "Sex ratio at birth.*" = "MtoF_Ratio_birth",
+                             "Share of employment in nonagriculture, female.*" = "Empl_Nonagriculture_Pct_Female",
+                             "Share of seats in parliament.*" = "Parlaiment_Pct_Female",
+                             "Total population.*" = "Pop_Total",
+                             "Unemployment, (total|youth).*" = "Unemployment_\\1",
+                             "Urban population" = "Pop_Urban_Pct",
+                             "Vulnerable employment.*" = "Empl_Vulnerable_Pct",
+                             "Women with account at .*" = "Female_Bank_Acct_Pct",
+                             "Working poor at .*" = "Working_Poor_Pct_3.10day",
+                             "Young age.* dependency ratio.*" = "Young_Dependency_Pct",
+                             "Youth unemployment rate.*" = "Youth_Unemployment_FtoM")
+           )) %>%
   select(-indicator_id, -indicator_name) %>%
   tidyr::spread(key = name, value = value)
 
-write_csv(hdi_2017, "ds303_2019/2017_Human_Dev_Index.csv")
+write_csv(hdi_2017, path = "ds303_2019/2017_Human_Dev_Index.csv")
 
 qplot(`Human Development Index, female`, `Human Development Index, male`, data = hdi_2017) +
   geom_abline(slope = 1, intercept = 0) +
