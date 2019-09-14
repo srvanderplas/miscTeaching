@@ -154,31 +154,34 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
            str_remove_all(" \\(years\\)") %>%
            str_replace_all(c("Adolescent birth.*" = "Teen_Birth_Rate",
                              "Coefficient of human inequality" = "Coef_Human_Inequality",
-                             "Domestic credit.*" = "Financial_Sector_Domestic_Credit_PctGDP",
+                             "Domestic credit.*" = "Finance_Sector_Domestic_Credit_PctGDP",
                              "Education index" = "Idx_Education",
                              "Employment in agricul.*" = "Empl_Agriculture",
                              "Employment in services.*" = "Empl_Services",
                              "Employment to population.*" = "Empl_Pop_Ratio",
                              "Estimated gross national income per capita, (.*) \\(.*$" = "GNIpc_\\1",
-                             "Expected years of schooling,? ?(.*)? .years." =  "Expected_Years_School_\\1",
+                             "Expected years of schooling, ([a-z]{1,}).*" = "School_Expected_Years_\\1",
+                             "Exports and imports.*" = "Exports_Imports_PctGDP",
+                             "Foreign direct investment.*" = "Foreign_Direct_Investment_PctGDP",
                              "Gender (.*) Index.*" = "Idx_Gender_\\1",
                              "Gross capital.*" = "Gross_Capital_PctGDP",
                              "Gross domestic product.*" = "GDP",
+                             "GDP per capita.*" = "GDP_pc",
                              "Gross fixed capital.*" = "Gross_Fixed_Capital_PctGDP",
                              "Gross national income.*" = "Gross_National_Income",
                              "HDI rank" = "HDI_rank",
                              "Human Development Index,? ?(.*)?" = "Idx_Human_Development_\\1",
                              "Income index" = "Idx_Income",
                              "[Ll]ife expectancy" = "Life_Exp",
-                             "Inequality-adjusted (.*) .?(?:IHDI|index).*" = "Idx_IneqAdj_\\1",
-                             "Inequality in (.*)" = "Ineq_\\1",
+                             "Inequality-adjusted ([A-z]*) .?(?:IHDI|index).*" = "Idx_IneqAdj_\\1",
+                             "Inequality in ([A-z]*).*" = "Ineq_\\1",
                              "Infants lacking immunization, ([A-z]*).*" = "Infants_Missing_\\1_Vaccine",
                              "Labour force participation rate .. ages 15 and older.,? ?(.*)?" = "Labor_Participation_\\1",
                              "Life_Exp at birth,? ?(.*) ?.*" = "Life_Exp_Birth_\\1",
-                             "Mean years of schooling,? ?([a-z]*).*" = "School_AvgYears_\\1",
+                             "Mean years of schooling,? ?([A-z]*).*" = "School_Mean_Years_\\1",
                              "Old-age.* dependency.*" = "Elderly_Dependency_Pct",
                              "Overall loss in HDI.*" = "Ineq_HDI_Loss",
-                             "Population ages ([\\d-]) .*\\(millions\\)" = "Pop_\\1",
+                             "Population ages ([\\d-–]*).*\\(millions\\)" = "Pop_\\1",
                              "Population under age 5.*" = "Pop_under5",
                              "Private capital flows.*" = "Private_capital_flows_PctGDP",
                              "Red List Index.*" = "Idx_Red_List",
@@ -196,8 +199,8 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
                              "Young age.* dependency ratio.*" = "Young_Dependency_Pct",
                              "Youth unemployment rate.*" = "Youth_Unemployment_FtoM")
            ) %>%
-           str_remove("_$") %>%
-           str_replace_all(" ", "_")) %>%
+           str_remove_all("[_ ]{1,}$") %>%
+           str_replace_all("[, ]{1,}", "_")) %>%
   select(-indicator_id, -indicator_name) %>%
   tidyr::spread(key = name, value = value)
 
