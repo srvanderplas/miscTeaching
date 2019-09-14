@@ -135,8 +135,6 @@ A __random variable__ is a variable that can take on many values with different 
 
 We group all of these into "random error" and model it with $\epsilon$. 
 
----
-
 ![Calvin and Hobbes on Surveys](calvin_hobbes_messing_with_data.png)
 
 ---
@@ -144,7 +142,7 @@ We group all of these into "random error" and model it with $\epsilon$.
 
 Random variables have a __distribution__ of potential values.
 
-```{r, fig.width = 8, fig.height = 4}
+```{r, fig.width = 8, fig.height = 4, echo = F, message = F, warning = F}
 x <- rnorm(200)
 normaldf <- tibble(x = seq(-4, 4, .01), y = dnorm(x))
 
@@ -162,6 +160,7 @@ poisdf <- tibble(x = seq(0, 10, 1), theoretical = dpois(x, 1),
 p2 <- ggplot(data = poisdf) + 
   geom_bar(aes(x = x, y = actual), color = "black", fill = "grey", stat = "identity") + 
   geom_point(aes(x = x, y = theoretical)) + 
+  scale_x_continuous(breaks = 1:10) + 
   ylab("prob") + 
   ggtitle("Discrete Distribution")
 
@@ -173,11 +172,9 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 
 We usually assume that errors are
 
-- independent    
-of other errors
+- independent (of other errors)
 
-- identically distributed    
-all errors come from the same distribution
+- identically distributed (all errors come from the same distribution)
 
 - (sometimes) errors come from a specific distribution
 
@@ -235,12 +232,148 @@ Visualization is an art as well as a science, and requires thinking critically a
 
 The United Nations maintains a dataset with quality-of-life indicators for most countries in the world. You can explore the data [here](http://hdr.undp.org/en/data). 
 
-We will work with the Human Development Index, and try to predict it based on other factors.
+There is also a "World Happiness Index" ([link](https://countryeconomy.com/demography/world-happiness-index))
 
-```{r}
+Let's predict happiness based on factors in the UN Quality of Life dataset
+
+```{r, message=F}
 library(tidyverse)
+# csv url: https://raw.githubusercontent.com/srvanderplas/
+#          miscTeaching/master/ds303_2019/2017_Human_Dev_Index.csv
 
-hdi_2017 <- read_csv()
+hdi_2017 <- read_csv("https://bit.ly/2mbYdfX")
+
+hdi_2017
+```
+
+---
+## Exploratory Data Analysis
+
+What variables might be relevant to the Happiness Index on a national scale?
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP, y = Happiness_Index))
+```
+
+
+---
+## Exploratory Data Analysis
+
+What variables might be relevant to the Happiness Index on a national scale?
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP, y = Happiness_Index)) + 
+  xlim(c(0, 2500))
+```
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP, y = Happiness_Index)) + 
+  scale_x_log10()
+```
+$\log_{10}(GDP)$
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Gross_National_Income, y = Happiness_Index))
+
+```
+
+Might not be linearly related, but definitely related...
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Life_Exp_Birth, y = Happiness_Index))
+
+```
+
+Again, possible nonlinearity, but definitely related
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Parlaiment_Pct_Female, y = Happiness_Index))
+```
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Teen_Birth_Rate, y = Happiness_Index))
+
+```
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Ineq_education, y = Happiness_Index))
+```
+Inequality in Education(%) : Inequality in distribution of years of schooling based on data from household surveys... [Source](http://hdr.undp.org/en/composite/IHDI#a)
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Ineq_income, y = Happiness_Index))
+```
+
+---
+## Exploratory Data Analysis
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Ineq_Life_Exp, y = Happiness_Index))
+```
+
+---
+## Exploratory Data Analysis
+
+```{r, eval = F}
+model_data <- select(hdi_2017, Country, Happiness_Index, 
+                     Ineq_education, Ineq_income, Ineq_Life_Exp, 
+                     Teen_Birth_Rate, Life_Exp_Birth, 
+                     GDP, Gross_National_Income) %>%
+  mutate(log10GDP = log10(GDP)) %>%
+  select(-GDP)
+
+install.packages("GGally")
+library(GGally)
+ggscatmat(data = model_data[, -c(1:2)]) 
+# Scatterplot Matrix - see all of the independent variables and how they relate
+# to each other
+
+```
+
+
+---
+## Exploratory Data Analysis
+
+```{r, echo = F, fig.width = 10, fig.height = 10, out.width = "60%", message = F, warning = F}
+model_data <- select(hdi_2017, Country, Happiness_Index, 
+                     Ineq_education, Ineq_income, Ineq_Life_Exp, 
+                     Teen_Birth_Rate, Life_Exp_Birth, 
+                     GDP, Gross_National_Income) %>%
+  mutate(log10GDP = log10(GDP)) %>%
+  select(-GDP)
+
+GGally::ggscatmat(data = model_data[, -c(1:2)]) 
 
 ```
 

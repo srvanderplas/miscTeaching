@@ -91,45 +91,12 @@ A __random variable__ is a variable that can take on many values with different 
 
 We group all of these into "random error" and model it with `\(\epsilon\)`. 
 
----
-## Randomness
-
-
-![Dilbert-style random number generation](Dilbert_random_number_generator.png)
+![Calvin and Hobbes on Surveys](calvin_hobbes_messing_with_data.png)
 
 ---
 ## Random Variables
 
 Random variables have a __distribution__ of potential values.
-
-
-```r
-x &lt;- rnorm(200)
-normaldf &lt;- tibble(x = seq(-4, 4, .01), y = dnorm(x))
-
-p1 &lt;- ggplot() + 
-  geom_histogram(aes(x = x, y = ..density..), fill = "grey", color = "black") + 
-  geom_line(aes(x = x, y = y), data = normaldf) + 
-  ggtitle("Continuous Distribution")
-
-x2 &lt;- rpois(200, lambda = 1)
-poisdf &lt;- tibble(x = seq(0, 10, 1), theoretical = dpois(x, 1), 
-                 actual = purrr::map_dbl(x, ~sum(x2 == .)/length(x2))) #%&gt;%
-  #tidyr::gather(key = "type", value = "prob", -x)
-
-
-p2 &lt;- ggplot(data = poisdf) + 
-  geom_bar(aes(x = x, y = actual), color = "black", fill = "grey", stat = "identity") + 
-  geom_point(aes(x = x, y = theoretical)) + 
-  ylab("prob") + 
-  ggtitle("Discrete Distribution")
-
-gridExtra::grid.arrange(p1, p2, ncol = 2)
-```
-
-```
-## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-```
 
 ![](Slides_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
 
@@ -138,11 +105,9 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 
 We usually assume that errors are
 
-- independent    
-of other errors
+- independent (of other errors)
 
-- identically distributed    
-all errors come from the same distribution
+- identically distributed (all errors come from the same distribution)
 
 - (sometimes) errors come from a specific distribution
 
@@ -166,6 +131,251 @@ e.g. systematic variation not accounted for by the model
 ---
 class: middle, center, inverse
 # Visual Diagnostics for Models
+
+
+---
+## Visual Diagnostics for Models
+
+For some model `$$y = f(\vec{x}) + \epsilon$$`
+
+- How do we examine our errors for problems?
+
+- How do we determine what model (of several) fits the data best?
+
+---
+
+## Exploratory Data Analysis
+
+Before you start modeling
+
+- Plot `\(y\)` against any explanatory variables `\(x_1, ..., x_n\)`
+
+- Plot the distribution of `\(y\)`, the distribution of `\(x_1, ..., x_n\)` to look for unexpected features
+
+- Plot the relationship between different `\(x_i\)`'s
+
+???
+
+Visualization is an art as well as a science, and requires thinking critically about your data while being open to finding new things.
+
+---
+
+## United Nations Human Development Data
+
+
+The United Nations maintains a dataset with quality-of-life indicators for most countries in the world. You can explore the data [here](http://hdr.undp.org/en/data). 
+
+There is also a "World Happiness Index" ([link](https://countryeconomy.com/demography/world-happiness-index))
+
+Let's predict happiness based on factors in the UN Quality of Life dataset
+
+
+```r
+library(tidyverse)
+# csv url: https://raw.githubusercontent.com/srvanderplas/
+#          miscTeaching/master/ds303_2019/2017_Human_Dev_Index.csv
+
+hdi_2017 &lt;- read_csv("https://bit.ly/2mbYdfX")
+
+hdi_2017
+```
+
+```
+## # A tibble: 154 x 74
+##    Country Happiness_Rank Happiness_Index  year Coef_Human_Ineq…
+##    &lt;chr&gt;            &lt;dbl&gt;           &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;
+##  1 United…             19            6.89  2017            13.1 
+##  2 United…             15            7.05  2017             9.09
+##  3 Germany             17            6.98  2017             7.79
+##  4 France              24            6.59  2017            10.1 
+##  5 Japan               58            5.89  2017             3.59
+##  6 Spain               30            6.35  2017            14.9 
+##  7 Italy               36            6.22  2017            11.9 
+##  8 Portug…             66            5.69  2017            13.2 
+##  9 Greece              82            5.29  2017            13.1 
+## 10 Ireland             16            7.02  2017             8.60
+## # … with 144 more rows, and 69 more variables:
+## #   Elderly_Dependency_Pct &lt;dbl&gt;, Empl_Agriculture &lt;dbl&gt;,
+## #   Empl_Nonagriculture_Pct_Female &lt;dbl&gt;, Empl_Pop_Ratio &lt;dbl&gt;,
+## #   Empl_Services &lt;dbl&gt;, Empl_Vulnerable_Pct &lt;dbl&gt;,
+## #   Expected_years_of_schooling &lt;dbl&gt;, Exports_Imports_PctGDP &lt;dbl&gt;,
+## #   Female_Bank_Acct_Pct &lt;dbl&gt;,
+## #   Finance_Sector_Domestic_Credit_PctGDP &lt;dbl&gt;,
+## #   Foreign_Direct_Investment_PctGDP &lt;dbl&gt;, GDP &lt;dbl&gt;, GDP_pc &lt;dbl&gt;,
+## #   GNIpc_female &lt;dbl&gt;, GNIpc_male &lt;dbl&gt;, Gross_Capital_PctGDP &lt;dbl&gt;,
+## #   Gross_Fixed_Capital_PctGDP &lt;dbl&gt;, Gross_National_Income &lt;dbl&gt;,
+## #   HDI_rank &lt;dbl&gt;, Idx_Education &lt;dbl&gt;, Idx_Gender_Development &lt;dbl&gt;,
+## #   Idx_Gender_Inequality &lt;dbl&gt;, Idx_Human_Development &lt;dbl&gt;,
+## #   Idx_Human_Development_female &lt;dbl&gt;, Idx_Human_Development_male &lt;dbl&gt;,
+## #   Idx_Income &lt;dbl&gt;, Idx_IneqAdj_education &lt;dbl&gt;,
+## #   Idx_IneqAdj_income &lt;dbl&gt;, Idx_IneqAdj_Life_Exp &lt;dbl&gt;,
+## #   Idx_Red_List &lt;dbl&gt;, Ineq_education &lt;dbl&gt;, Ineq_HDI_Loss &lt;dbl&gt;,
+## #   Ineq_income &lt;dbl&gt;, Ineq_Life_Exp &lt;dbl&gt;,
+## #   `Inequality-adjusted_HDI` &lt;dbl&gt;, Infants_Missing_DPT_Vaccine &lt;dbl&gt;,
+## #   Infants_Missing_measles_Vaccine &lt;dbl&gt;, Labor_Participation &lt;dbl&gt;,
+## #   Labor_Participation_female &lt;dbl&gt;, Labor_Participation_male &lt;dbl&gt;,
+## #   Life_Exp_Birth &lt;dbl&gt;, Life_Exp_Birth_female &lt;dbl&gt;,
+## #   Life_Exp_Birth_male &lt;dbl&gt;, Life_Exp_index &lt;dbl&gt;,
+## #   MtoF_Ratio_birth &lt;dbl&gt;, Parlaiment_Pct_Female &lt;dbl&gt;,
+## #   `Pop_15–64` &lt;dbl&gt;, Pop_65 &lt;dbl&gt;, Pop_Total &lt;dbl&gt;, Pop_under5 &lt;dbl&gt;,
+## #   Pop_Urban_Pct &lt;dbl&gt;, Private_capital_flows_PctGDP &lt;dbl&gt;,
+## #   Refugees_from_country_1000s &lt;dbl&gt;, Remittances_inflows_PctGDP &lt;dbl&gt;,
+## #   School_Expected_Years_female &lt;dbl&gt;, School_Expected_Years_male &lt;dbl&gt;,
+## #   School_Mean_Years &lt;dbl&gt;, School_Mean_Years_female &lt;dbl&gt;,
+## #   School_Mean_Years_male &lt;dbl&gt;, School_Secondary_Pop_Pct &lt;dbl&gt;,
+## #   School_Secondary_Pop_Pct_female &lt;dbl&gt;,
+## #   School_Secondary_Pop_Pct_male &lt;dbl&gt;, Teen_Birth_Rate &lt;dbl&gt;,
+## #   Unemployment_FtoM_Ratio &lt;dbl&gt;, Unemployment_total &lt;dbl&gt;,
+## #   Unemployment_youth &lt;dbl&gt;, Working_Poor_Pct_3.10day &lt;dbl&gt;,
+## #   Young_Dependency_Pct &lt;dbl&gt;, Youth_Unemployment_FtoM &lt;dbl&gt;
+```
+
+---
+## Exploratory Data Analysis
+
+What variables might be relevant to the Happiness Index on a national scale?
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+
+---
+## Exploratory Data Analysis
+
+What variables might be relevant to the Happiness Index on a national scale?
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP, y = Happiness_Index)) + 
+  xlim(c(0, 2500))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = GDP, y = Happiness_Index)) + 
+  scale_x_log10()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+`\(\log_{10}(GDP)\)`
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Gross_National_Income, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+Might not be linearly related, but definitely related...
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Life_Exp_Birth, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+
+Again, possible nonlinearity, but definitely related
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Parlaiment_Pct_Female, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Teen_Birth_Rate, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Ineq_education, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+Inequality in Education(%) : Inequality in distribution of years of schooling based on data from household surveys... [Source](http://hdr.undp.org/en/composite/IHDI#a)
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Ineq_income, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+## Exploratory Data Analysis
+
+
+```r
+ggplot(hdi_2017) + 
+  geom_point(aes(x = Ineq_Life_Exp, y = Happiness_Index))
+```
+
+![](Slides_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+
+---
+## Exploratory Data Analysis
+
+
+```r
+model_data &lt;- select(hdi_2017, Country, Happiness_Index, 
+                     Ineq_education, Ineq_income, Ineq_Life_Exp, 
+                     Teen_Birth_Rate, Life_Exp_Birth, 
+                     GDP, Gross_National_Income) %&gt;%
+  mutate(log10GDP = log10(GDP)) %&gt;%
+  select(-GDP)
+
+install.packages("GGally")
+library(GGally)
+ggscatmat(data = model_data[, -c(1:2)]) 
+# Scatterplot Matrix - see all of the independent variables and how they relate
+# to each other
+```
+
+
+---
+## Exploratory Data Analysis
+
+&lt;img src="Slides_files/figure-html/unnamed-chunk-15-1.png" width="60%" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
