@@ -1,6 +1,6 @@
-download.file("http://www.who.int/entity/immunization/monitoring_surveillance/data/coverage_estimates_series.xls", destfile = "ds303_2019_jennifer/WHO_Vaccination_Rates.xls", mode = "wb")
-download.file("https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/EXCEL_FILES/1_Population/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx", destfile = "ds303_2019_jennifer/World_Population_Rate.xlsx", mode = "wb")
-download.file("http://ec2-54-174-131-205.compute-1.amazonaws.com/API/hdro_api_all.json", "ds303_2019_jennifer/human_dev_index.json")
+download.file("http://www.who.int/entity/immunization/monitoring_surveillance/data/coverage_estimates_series.xls", destfile = "ds303_2019/WHO_Vaccination_Rates.xls", mode = "wb")
+download.file("https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/EXCEL_FILES/1_Population/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx", destfile = "ds303_2019/World_Population_Rate.xlsx", mode = "wb")
+download.file("http://ec2-54-174-131-205.compute-1.amazonaws.com/API/hdro_api_all.json", "ds303_2019/human_dev_index.json")
 
 library(readxl)
 library(tidyverse)
@@ -74,7 +74,7 @@ world_pop <- read_xlsx("~/Downloads/World_Population_Rate.xlsx", skip = 16,
 # ------------------------------------------------------------------------------
 
 # --- Human Development Index Data ---------------------------------------------
-hdi_all <- jsonlite::fromJSON("ds303_2019_jennifer/human_dev_index.json")
+hdi_all <- jsonlite::fromJSON("ds303_2019/human_dev_index.json")
 
 hdi <- hdi_all %>%
   mutate(indicator_id = parse_integer(indicator_id),
@@ -155,7 +155,7 @@ hdi_2017 <- hdi %>% filter(year == 2017) %>%
   select(-indicator_id, -indicator_name) %>%
   tidyr::spread(key = name, value = value)
 
-write_csv(hdi_2017, "ds303_2019_jennifer/2017_Human_Dev_Index.csv")
+write_csv(hdi_2017, "ds303_2019/2017_Human_Dev_Index.csv")
 
 qplot(`Human Development Index, female`, `Human Development Index, male`, data = hdi_2017) +
   geom_abline(slope = 1, intercept = 0) +
