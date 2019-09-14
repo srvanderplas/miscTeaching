@@ -371,9 +371,127 @@ model_data <- select(hdi_2017, Country, Happiness_Index,
                      Teen_Birth_Rate, Life_Exp_Birth, 
                      GDP, Gross_National_Income) %>%
   mutate(log10GDP = log10(GDP)) %>%
-  select(-GDP)
+  select(-GDP) %>%
+  na.omit()
 
 GGally::ggscatmat(data = model_data[, -c(1:2)]) 
 
 ```
 
+---
+## Fit a model
+
+```{r}
+bad_model <- lm(Happiness_Index ~ ., data = select(model_data, -Country))
+summary(bad_model)
+```
+
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+model_data$bad_model_predictions <- predict(bad_model, newdata = model_data)
+
+ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) + 
+  geom_point() + geom_abline(slope = 1, intercept = 0)
+```
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+model_data$bad_model_resid <- residuals(bad_model)
+
+ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+model_data$bad_model_resid <- residuals(bad_model)
+
+ggplot(data = model_data, aes(x = Gross_National_Income, y = bad_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+---
+## Fit another model
+```{r}
+meh_model <- lm(Happiness_Index ~ ., data = select(model_data, -Country, -Gross_National_Income, -matches("bad_model")))
+summary(meh_model)
+model_data$meh_model_resid <- resid(meh_model)
+```
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = Happiness_Index, y = meh_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = meh_model_resid, y = bad_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+Removing a significant variable from the model and nothing changes...
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+---
+## Model Diagnostics
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+---
+## Model Diagnostics
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+
+---
+## Model Diagnostics
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+
+---
+## Model Diagnostics
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+
+
+---
+## Model Diagnostics
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```

@@ -376,6 +376,216 @@ ggscatmat(data = model_data[, -c(1:2)])
 ## Exploratory Data Analysis
 
 &lt;img src="Slides_files/figure-html/unnamed-chunk-15-1.png" width="60%" /&gt;
+
+---
+## Fit a model
+
+
+```r
+bad_model &lt;- lm(Happiness_Index ~ ., data = select(model_data, -Country))
+summary(bad_model)
+```
+
+```
+## 
+## Call:
+## lm(formula = Happiness_Index ~ ., data = select(model_data, -Country))
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.82664 -0.36725  0.06825  0.38399  1.32214 
+## 
+## Coefficients:
+##                         Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)           -1.703e+00  1.843e+00  -0.924 0.357298    
+## Ineq_education        -1.268e-02  6.499e-03  -1.951 0.053211 .  
+## Ineq_income            3.504e-04  5.984e-03   0.059 0.953389    
+## Ineq_Life_Exp          1.694e-02  1.935e-02   0.875 0.382940    
+## Teen_Birth_Rate        5.491e-03  2.243e-03   2.448 0.015708 *  
+## Life_Exp_Birth         8.673e-02  2.299e-02   3.772 0.000244 ***
+## Gross_National_Income  2.848e-05  5.070e-06   5.617 1.12e-07 ***
+## log10GDP               2.467e-02  7.712e-02   0.320 0.749538    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6257 on 131 degrees of freedom
+## Multiple R-squared:  0.7088,	Adjusted R-squared:  0.6932 
+## F-statistic: 45.54 on 7 and 131 DF,  p-value: &lt; 2.2e-16
+```
+
+
+---
+## Model Diagnostics
+
+
+```r
+model_data$bad_model_predictions &lt;- predict(bad_model, newdata = model_data)
+
+ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) + 
+  geom_point() + geom_abline(slope = 1, intercept = 0)
+```
+
+![](Slides_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+
+```r
+model_data$bad_model_resid &lt;- residuals(bad_model)
+
+ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+![](Slides_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Diagnostics
+
+
+```r
+model_data$bad_model_resid &lt;- residuals(bad_model)
+
+ggplot(data = model_data, aes(x = Gross_National_Income, y = bad_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+![](Slides_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+---
+## Fit another model
+
+```r
+meh_model &lt;- lm(Happiness_Index ~ ., data = select(model_data, -Country, -Gross_National_Income, -matches("bad_model")))
+summary(meh_model)
+```
+
+```
+## 
+## Call:
+## lm(formula = Happiness_Index ~ ., data = select(model_data, -Country, 
+##     -Gross_National_Income, -matches("bad_model")))
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.79846 -0.43521  0.01812  0.48450  1.63138 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)     -4.2539441  1.9820346  -2.146  0.03368 *  
+## Ineq_education  -0.0202762  0.0070539  -2.874  0.00472 ** 
+## Ineq_income     -0.0007479  0.0066368  -0.113  0.91045    
+## Ineq_Life_Exp    0.0301047  0.0213121   1.413  0.16014    
+## Teen_Birth_Rate  0.0037366  0.0024653   1.516  0.13199    
+## Life_Exp_Birth   0.1277461  0.0241912   5.281 5.16e-07 ***
+## log10GDP         0.0903391  0.0845904   1.068  0.28749    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6944 on 132 degrees of freedom
+## Multiple R-squared:  0.6386,	Adjusted R-squared:  0.6222 
+## F-statistic: 38.88 on 6 and 132 DF,  p-value: &lt; 2.2e-16
+```
+
+```r
+model_data$meh_model_resid &lt;- resid(meh_model)
+```
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = Happiness_Index, y = meh_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+![](Slides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = meh_model_resid, y = bad_model_resid)) + 
+  geom_point() + geom_smooth(method = "lm")
+```
+
+![](Slides_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+Removing a significant variable from the model and nothing changes...
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+```r
+ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+```r
+ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Diagnostics
+
+```r
+ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Diagnostics
+
+```r
+ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
+
+
+
+---
+## Model Diagnostics
+
+```r
+ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
