@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Visual Diagnostics for Statistical Modeling</title>
+    <meta charset="utf-8" />
+    <meta name="date" content="2018-09-16" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Visual Diagnostics for Statistical Modeling
+### 2018-09-16
+
+---
+
+
+
+
+
+class: inverse,middle,center
+# Randomness, Models, and Errors
+
+
+
+---
+class: middle,center
+### In the beginning, there was the data...
+
+---
+
+![](Slides_files/figure-html/init-olympic-1.png)&lt;!-- --&gt;
+--
+and the statistician said "Let there be a model". 
+
+---
+
+![](Slides_files/figure-html/init-olympic-lm-1.png)&lt;!-- --&gt;
+
+And we fit a linear model. 
+
+---
+
+![](Slides_files/figure-html/init-olympic-errors-1.png)&lt;!-- --&gt;
+
+The model separated the data into predictions and errors, 
+
+---
+
+![](Slides_files/figure-html/init-olympic-known-unknown-1.png)&lt;!-- --&gt;
+
+or "known" and "unknown" sources of variation. 
+---
+class: middle,center
+
+The statistician called the "unknown" variation __random error__,    
+but s/he did not rest. 
+&lt;br/&gt;&lt;br/&gt;&lt;br/&gt;
+--
+[Variance Decomposition Derivation](https://en.wikipedia.org/wiki/Variance#Decomposition)
+
+
+---
+## Randomness and Error
+
+Linear regression model form: `$$y = w_0 + w_1 x$$`
+
+--
+
+This model is __deterministic__ - you will always get the same `\(y\)` value when you have multiple observations at the same `\(x\)`
+
+&lt;br/&gt;&lt;br/&gt;
+
+--
+
+Probabilistic version: `$$y = w_0 + w_1 x + \epsilon$$`
+
+`\(\epsilon\)` represents "random error"
+
+A __random variable__ is a variable that can take on many values with different probabilities. `\(x\)`, `\(y\)`, and `\(\epsilon\)` are random variables. 
+
+---
+## Sources of Error
+
+- measurement
+- environmental
+- human
+- modeling
+
+We group all of these into "random error" and model it with `\(\epsilon\)`. 
+
+---
+## Randomness
+
+
+![Dilbert-style random number generation](Dilbert_random_number_generator.png)
+
+---
+## Random Variables
+
+Random variables have a __distribution__ of potential values.
+
+
+```r
+x &lt;- rnorm(200)
+normaldf &lt;- tibble(x = seq(-4, 4, .01), y = dnorm(x))
+
+p1 &lt;- ggplot() + 
+  geom_histogram(aes(x = x, y = ..density..), fill = "grey", color = "black") + 
+  geom_line(aes(x = x, y = y), data = normaldf) + 
+  ggtitle("Continuous Distribution")
+
+x2 &lt;- rpois(200, lambda = 1)
+poisdf &lt;- tibble(x = seq(0, 10, 1), theoretical = dpois(x, 1), 
+                 actual = purrr::map_dbl(x, ~sum(x2 == .)/length(x2))) #%&gt;%
+  #tidyr::gather(key = "type", value = "prob", -x)
+
+
+p2 &lt;- ggplot(data = poisdf) + 
+  geom_bar(aes(x = x, y = actual), color = "black", fill = "grey", stat = "identity") + 
+  geom_point(aes(x = x, y = theoretical)) + 
+  ylab("prob") + 
+  ggtitle("Discrete Distribution")
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](Slides_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+
+---
+## Statistical Modeling
+
+We usually assume that errors are
+
+- independent    
+of other errors
+
+- identically distributed    
+all errors come from the same distribution
+
+- (sometimes) errors come from a specific distribution
+
+--
+
+... that's where the trouble starts...
+
+---
+## Statistical Modeling
+
+Most of the trouble in modeling and prediction comes from three places:
+
+- non-independent errors    
+e.g. relationships between points within the data set
+
+- non identical errors    
+e.g. systematic variation not accounted for by the model
+
+- mismatches between model assumptions and the distribution of the errors
+
+---
+class: middle, center, inverse
+# Visual Diagnostics for Models
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
