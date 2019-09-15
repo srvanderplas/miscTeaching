@@ -384,14 +384,32 @@ GGally::ggscatmat(data = model_data[, -c(1:2)])
 ```{r}
 bad_model <- lm(Happiness_Index ~ ., data = select(model_data, -Country))
 summary(bad_model)
+model_data$bad_model_resid <- residuals(bad_model)
+model_data$bad_model_predictions <- predict(bad_model, newdata = model_data)
 ```
-
 
 ---
 ## Model Diagnostics
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-model_data$bad_model_predictions <- predict(bad_model, newdata = model_data)
+n_density <- tibble(x = seq(-3, 3, .01), y = dnorm(x))
+ggplot(model_data, aes(x = bad_model_resid)) + 
+  geom_histogram(aes(y = ..density..), binwidth = .2)
+```
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(model_data, aes(sample = bad_model_resid)) + 
+  geom_qq() + 
+  geom_qq_line()
+```
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
 
 ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) + 
   geom_point() + geom_abline(slope = 1, intercept = 0)
@@ -401,11 +419,19 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) +
 ## Model Diagnostics
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-model_data$bad_model_resid <- residuals(bad_model)
-
 ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
+
+---
+## Model Diagnostics
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = cut_number(Happiness_Index, 8), y = bad_model_resid)) + 
+  geom_jitter() + 
+  geom_boxplot(alpha = .5)
+```
+
 
 
 ---
@@ -417,6 +443,8 @@ model_data$bad_model_resid <- residuals(bad_model)
 ggplot(data = model_data, aes(x = Gross_National_Income, y = bad_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
+
+
 
 ---
 ## Fit another model
@@ -494,4 +522,47 @@ ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) +
 ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
+```
+
+
+---
+## Model Diagnostics
+
+These diagnostics work for pretty much any type of model that generates predictions.
+
+```{r}
+library(randomForest)
+rf_model <- randomForest(Happiness_Index ~ ., data = select(model_data, -Country))
+print(rf_model)
+model_data$rf_predict <- predict(rf_model)
+model_data$rf_resid <- model_data$Happiness_Index - model_data$rf_predict
+```
+
+You'll talk about random forests later in the semester. They're not a linear model, so they work a bit differently.
+
+---
+## Model Diagnostics
+
+```{r}
+ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) + 
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0)
+```
+
+
+---
+## Model Diagnostics
+
+```{r}
+ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+
+---
+## Model Diagnostics
+
+```{r}
+ggplot(data = model_data, aes(x = rf_resid)) + 
+  geom_histogram()
 ```

@@ -413,16 +413,19 @@ summary(bad_model)
 ## F-statistic: 45.54 on 7 and 131 DF,  p-value: &lt; 2.2e-16
 ```
 
+```r
+model_data$bad_model_resid &lt;- residuals(bad_model)
+model_data$bad_model_predictions &lt;- predict(bad_model, newdata = model_data)
+```
 
 ---
 ## Model Diagnostics
 
 
 ```r
-model_data$bad_model_predictions &lt;- predict(bad_model, newdata = model_data)
-
-ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) + 
-  geom_point() + geom_abline(slope = 1, intercept = 0)
+n_density &lt;- tibble(x = seq(-3, 3, .01), y = dnorm(x))
+ggplot(model_data, aes(x = bad_model_resid)) + 
+  geom_histogram(aes(y = ..density..), binwidth = .2)
 ```
 
 ![](Slides_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
@@ -432,13 +435,47 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) +
 
 
 ```r
-model_data$bad_model_resid &lt;- residuals(bad_model)
+ggplot(model_data, aes(sample = bad_model_resid)) + 
+  geom_qq() + 
+  geom_qq_line()
+```
 
+![](Slides_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_predictions)) + 
+  geom_point() + geom_abline(slope = 1, intercept = 0)
+```
+
+![](Slides_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+
+```r
 ggplot(data = model_data, aes(x = Happiness_Index, y = bad_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = cut_number(Happiness_Index, 8), y = bad_model_resid)) + 
+  geom_jitter() + 
+  geom_boxplot(alpha = .5)
+```
+
+![](Slides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+
 
 
 ---
@@ -452,7 +489,9 @@ ggplot(data = model_data, aes(x = Gross_National_Income, y = bad_model_resid)) +
   geom_point() + geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+
+
 
 ---
 ## Fit another model
@@ -502,7 +541,7 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = meh_model_resid)) +
   geom_point() + geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -513,7 +552,7 @@ ggplot(data = model_data, aes(x = meh_model_resid, y = bad_model_resid)) +
   geom_point() + geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
 Removing a significant variable from the model and nothing changes...
 
 ---
@@ -526,7 +565,7 @@ ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -537,7 +576,7 @@ ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -548,7 +587,7 @@ ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -560,7 +599,7 @@ ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -572,7 +611,7 @@ ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-30-1.png)&lt;!-- --&gt;
 
 
 
@@ -585,7 +624,107 @@ ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Diagnostics
+
+These diagnostics work for pretty much any type of model that generates predictions.
+
+
+```r
+library(randomForest)
+```
+
+```
+## randomForest 4.6-14
+```
+
+```
+## Type rfNews() to see new features/changes/bug fixes.
+```
+
+```
+## 
+## Attaching package: 'randomForest'
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     combine
+```
+
+```
+## The following object is masked from 'package:ggplot2':
+## 
+##     margin
+```
+
+```r
+rf_model &lt;- randomForest(Happiness_Index ~ ., data = select(model_data, -Country))
+print(rf_model)
+```
+
+```
+## 
+## Call:
+##  randomForest(formula = Happiness_Index ~ ., data = select(model_data,      -Country)) 
+##                Type of random forest: regression
+##                      Number of trees: 500
+## No. of variables tried at each split: 3
+## 
+##           Mean of squared residuals: 0.07321394
+##                     % Var explained: 94.22
+```
+
+```r
+model_data$rf_predict &lt;- predict(rf_model)
+model_data$rf_resid &lt;- model_data$Happiness_Index - model_data$rf_predict
+```
+
+You'll talk about random forests later in the semester. They're not a linear model, so they work a bit differently.
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) + 
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0)
+```
+
+![](Slides_files/figure-html/unnamed-chunk-33-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+
+![](Slides_files/figure-html/unnamed-chunk-34-1.png)&lt;!-- --&gt;
+
+---
+## Model Diagnostics
+
+
+```r
+ggplot(data = model_data, aes(x = rf_resid)) + 
+  geom_histogram()
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](Slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
