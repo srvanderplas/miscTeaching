@@ -543,7 +543,7 @@ You'll talk about random forests later in the semester. They're not a linear mod
 ---
 ## Model Diagnostics
 
-```{r}
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
 ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0)
@@ -553,7 +553,7 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) +
 ---
 ## Model Diagnostics
 
-```{r}
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
 ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) + 
   geom_point() + 
   geom_smooth(method = "lm")
@@ -562,7 +562,7 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) +
 ---
 ## Model Diagnostics
 
-```{r}
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
 ggplot(data = model_data, aes(x = rf_resid)) + 
   geom_histogram()
 ```
