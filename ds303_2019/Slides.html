@@ -675,8 +675,8 @@ print(rf_model)
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 3
 ## 
-##           Mean of squared residuals: 0.07151578
-##                     % Var explained: 94.36
+##           Mean of squared residuals: 0.07221528
+##                     % Var explained: 94.3
 ```
 
 ```r
@@ -721,6 +721,253 @@ ggplot(data = model_data, aes(x = rf_resid)) +
 ```
 
 ![](Slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Comparison
+
+
+```r
+ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) + 
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0) + 
+  coord_fixed(ratio = 1) + 
+  geom_smooth(se = F)
+```
+
+![](Slides_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+
+---
+class: middle, center
+## Cross Validation and Model Comparison (in R)
+
+---
+## Tidy models
+
+- A unified framework for modeling in R
+
+- Goal is to have the same (tidy) output for common models to facilitate comparisons
+
+- `parsnip`: tidy interface for models,
+
+- `broom`: tidy format for model analysis objects, 
+
+- `yardstick`: tidy measures of model performance
+
+
+```r
+library(tidyverse)
+install.packages(c("parsnip", "broom", "yardstick", "tidymodels", "AmesHousing"))
+```
+
+---
+## Parsnip
+
+
+```r
+library(tidyverse)
+library(tidymodels)
+```
+
+```
+## Registered S3 method overwritten by 'xts':
+##   method     from
+##   as.zoo.xts zoo
+```
+
+```
+## ── Attaching packages ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidymodels 0.0.2 ──
+```
+
+```
+## ✔ broom     0.5.2       ✔ recipes   0.1.7  
+## ✔ dials     0.0.2       ✔ rsample   0.0.5  
+## ✔ infer     0.4.0.1     ✔ yardstick 0.0.4  
+## ✔ parsnip   0.0.3.1
+```
+
+```
+## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidymodels_conflicts() ──
+## ✖ randomForest::combine() masks dplyr::combine()
+## ✖ scales::discard()       masks purrr::discard()
+## ✖ dplyr::filter()         masks stats::filter()
+## ✖ recipes::fixed()        masks stringr::fixed()
+## ✖ dplyr::lag()            masks stats::lag()
+## ✖ dials::margin()         masks randomForest::margin(), ggplot2::margin()
+## ✖ yardstick::spec()       masks readr::spec()
+## ✖ recipes::step()         masks stats::step()
+```
+
+```r
+library(AmesHousing)
+ames &lt;- make_ames()
+set.seed(4595)
+# Split data into training and test set
+data_split &lt;- initial_split(ames, strata = "Sale_Price", p = 0.75)
+ames_train &lt;- training(data_split)
+ames_test  &lt;- testing(data_split)
+```
+---
+## Parsnip
+
+
+```r
+rf_model &lt;- rand_forest(mode = "regression") %&gt;% set_engine("ranger") 
+linear_model &lt;- linear_reg() %&gt;% set_engine("lm")
+
+models &lt;- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
+                         model_fcn = list(rf_model, linear_model)) %&gt;%
+  dplyr::mutate(
+    res = purrr::map(
+      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
+                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
+    pred = purrr::map(res, predict, new_data = ames_test)
+  )
+```
+
+---
+## Parsnip
+
+```r
+models$res[[1]]
+```
+
+```
+## parsnip model object
+## 
+## Ranger result
+## 
+## Call:
+##  ranger::ranger(formula = formula, data = data, num.threads = 1,      verbose = FALSE, seed = sample.int(10^5, 1)) 
+## 
+## Type:                             Regression 
+## Number of trees:                  500 
+## Sample size:                      2199 
+## Number of independent variables:  5 
+## Mtry:                             2 
+## Target node size:                 5 
+## Variable importance mode:         none 
+## Splitrule:                        variance 
+## OOB prediction error (MSE):       0.008561296 
+## R squared (OOB):                  0.7320611
+```
+
+---
+## Parsnip
+
+```r
+models$res[[2]]
+```
+
+```
+## parsnip model object
+## 
+## 
+## Call:
+## stats::lm(formula = formula, data = data)
+## 
+## Coefficients:
+##                                         (Intercept)  
+##                                          -1.270e+02  
+##                                           Longitude  
+##                                          -1.022e+00  
+##                                            Latitude  
+##                                           1.027e+00  
+##                                            Lot_Area  
+##                                           3.207e-06  
+##                           NeighborhoodCollege_Creek  
+##                                           8.930e-02  
+##                                NeighborhoodOld_Town  
+##                                          -6.539e-02  
+##                                 NeighborhoodEdwards  
+##                                          -9.178e-02  
+##                                NeighborhoodSomerset  
+##                                           1.694e-01  
+##                      NeighborhoodNorthridge_Heights  
+##                                           2.816e-01  
+##                                 NeighborhoodGilbert  
+##                                           6.931e-02  
+##                                  NeighborhoodSawyer  
+##                                          -6.870e-02  
+##                          NeighborhoodNorthwest_Ames  
+##                                           8.707e-02  
+##                             NeighborhoodSawyer_West  
+##                                           3.208e-02  
+##                                NeighborhoodMitchell  
+##                                           1.034e-01  
+##                               NeighborhoodBrookside  
+##                                          -5.795e-02  
+##                                NeighborhoodCrawford  
+##                                           1.538e-01  
+##                  NeighborhoodIowa_DOT_and_Rail_Road  
+##                                          -1.562e-01  
+##                              NeighborhoodTimberland  
+##                                           2.155e-01  
+##                              NeighborhoodNorthridge  
+##                                           2.995e-01  
+##                             NeighborhoodStone_Brook  
+##                                           2.783e-01  
+## NeighborhoodSouth_and_West_of_Iowa_State_University  
+##                                          -4.751e-02  
+##                             NeighborhoodClear_Creek  
+##                                           6.937e-02  
+##                          NeighborhoodMeadow_Village  
+##                                          -9.137e-02  
+##                               NeighborhoodBriardale  
+##                                          -1.271e-01  
+##                     NeighborhoodBloomington_Heights  
+##                                           1.086e-01  
+##                                 NeighborhoodVeenker  
+##                                           1.878e-01  
+##                         NeighborhoodNorthpark_Villa  
+##                                           4.285e-03  
+##                                 NeighborhoodBlueste  
+##                                           2.027e-02  
+##                                  NeighborhoodGreens  
+##                                           1.271e-01  
+##                             NeighborhoodGreen_Hills  
+##                                           3.741e-01  
+##                                NeighborhoodLandmark  
+##                                          -4.665e-02  
+##                                           Year_Sold  
+##                                          -3.332e-03
+```
+
+---
+## Parsnip - Model Comparisons
+
+
+```r
+ames_test_preds &lt;- models %&gt;%
+  # Get predictions and model names
+  select(model_name, pred) %&gt;% 
+  # Make a long, skinny data frame
+  unnest() %&gt;% 
+  # rename variables
+  rename(pred = .pred) %&gt;% 
+  # For each model, 
+  group_by(model_name) %&gt;% 
+  # number the rows 1:n(), where n() = 731
+  mutate(row = 1:n()) %&gt;%  
+  # Put each model in a different column
+  spread(key = model_name, value = pred) %&gt;% 
+  # Add in the actual test set data
+  bind_cols(ames_test) %&gt;% 
+  # Go back to a long-form dataset where predictions are in one column
+  gather(key = "model_name", value = "pred", random_forest:linear_regression)
+```
+
+---
+## Parsnip - Model Comparisons
+
+
+```r
+ggplot(aes(x = log10(Sale_Price), y = pred), data = ames_test_preds) + 
+  geom_point() + 
+  facet_wrap(~model_name)
+```
+
+&lt;img src="Slides_files/figure-html/unnamed-chunk-43-1.png" width="100%" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

@@ -566,3 +566,114 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) +
 ggplot(data = model_data, aes(x = rf_resid)) + 
   geom_histogram()
 ```
+
+
+---
+## Model Comparison
+
+```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
+ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) + 
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0) + 
+  coord_fixed(ratio = 1) + 
+  geom_smooth(se = F)
+```
+
+---
+class: middle, center
+## Cross Validation and Model Comparison (in R)
+
+---
+## Tidy models
+
+- A unified framework for modeling in R
+
+- Goal is to have the same (tidy) output for common models to facilitate comparisons
+
+- `parsnip`: tidy interface for models,
+
+- `broom`: tidy format for model analysis objects, 
+
+- `yardstick`: tidy measures of model performance
+
+```{r, eval = F}
+library(tidyverse)
+install.packages(c("parsnip", "broom", "yardstick", "tidymodels", "AmesHousing"))
+```
+
+---
+## Parsnip
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(AmesHousing)
+ames <- make_ames()
+set.seed(4595)
+# Split data into training and test set
+data_split <- initial_split(ames, strata = "Sale_Price", p = 0.75)
+ames_train <- training(data_split)
+ames_test  <- testing(data_split)
+```
+---
+## Parsnip
+
+```{r}
+rf_model <- rand_forest(mode = "regression") %>% set_engine("ranger") 
+linear_model <- linear_reg() %>% set_engine("lm")
+
+models <- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
+                         model_fcn = list(rf_model, linear_model)) %>%
+  dplyr::mutate(
+    res = purrr::map(
+      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
+                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
+    pred = purrr::map(res, predict, new_data = ames_test)
+  )
+```
+
+---
+## Parsnip
+```{r}
+models$res[[1]]
+```
+
+---
+## Parsnip
+```{r}
+models$res[[2]]
+```
+
+---
+## Parsnip - Model Comparisons
+
+```{r, fig.width = 4, fig.height = 4, out.width = "75%"}
+ames_test_preds <- models %>%
+  # Get predictions and model names
+  select(model_name, pred) %>% 
+  # Make a long, skinny data frame
+  unnest() %>% 
+  # rename variables
+  rename(pred = .pred) %>% 
+  # For each model, 
+  group_by(model_name) %>% 
+  # number the rows 1:n(), where n() = 731
+  mutate(row = 1:n()) %>%  
+  # Put each model in a different column
+  spread(key = model_name, value = pred) %>% 
+  # Add in the actual test set data
+  bind_cols(ames_test) %>% 
+  # Go back to a long-form dataset where predictions are in one column
+  gather(key = "model_name", value = "pred", 
+         random_forest:linear_regression)
+```
+
+---
+## Parsnip - Model Comparisons
+
+```{r, fig.width = 8, fig.height = 4, out.width = "100%"}
+ggplot(aes(x = log10(Sale_Price), y = pred), 
+       data = ames_test_preds) + 
+  geom_point() + facet_wrap(~model_name) + 
+  coord_fixed()
+```
