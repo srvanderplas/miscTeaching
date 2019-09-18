@@ -14,6 +14,5 @@ model_data <- select(hdi_2017, Country, Happiness_Index,
   na.omit()
 
 bad_model <- lm(Happiness_Index ~ ., data = select(model_data, -Country))
-summary(bad_model)
 model_data$bad_model_resid <- residuals(bad_model)
 model_data$bad_model_predictions <- predict(bad_model, newdata = model_data)
