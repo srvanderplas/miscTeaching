@@ -615,16 +615,17 @@ ggplot(data = model_data,
 
 - Work in groups of 3-4
 - Pick 1 dataset:
-  - Education-related variables
-  - GDP-related variables
-  - other Indexes as variables
-  - Medical and Poverty-related variables
+  - Education-related variables (http://bit.ly/ds303_edu)
+  - GDP-related variables (http://bit.ly/ds303_gdp)
+  - other Indexes as variables (http://bit.ly/ds303_idx)
+  - Medical and Poverty-related variables (http://bit.ly/ds303_med)
 
 - Each dataset has predicted values from 3 models: 
   - a knn model
   - a linear model
   - a random forest
 
-- Compare the models, identify areas where each model doesn't fit, and find other variables (columns after Country in the csv) which might be important to include
+- Compare the models, identify areas where each model doesn't fit, and (if you have time) find other variables (columns after Country in the csv) which might be important to include
 
 
+---

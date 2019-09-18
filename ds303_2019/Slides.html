@@ -643,7 +643,8 @@ ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) +
 ## Model Diagnostics
 
 ```r
-ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -656,7 +657,8 @@ ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) +
 ## Model Diagnostics
 
 ```r
-ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = log10GDP, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -700,7 +702,8 @@ library(randomForest)
 ```
 
 ```r
-rf_model &lt;- randomForest(Happiness_Index ~ ., data = select(model_data, -Country))
+rf_model &lt;- randomForest(Happiness_Index ~ ., 
+                         data = select(model_data, -Country))
 print(rf_model)
 ```
 
@@ -712,13 +715,14 @@ print(rf_model)
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 3
 ## 
-##           Mean of squared residuals: 0.06860588
-##                     % Var explained: 94.58
+##           Mean of squared residuals: 0.06590837
+##                     % Var explained: 94.8
 ```
 
 ```r
 model_data$rf_predict &lt;- predict(rf_model)
-model_data$rf_resid &lt;- model_data$Happiness_Index - model_data$rf_predict
+model_data$rf_resid &lt;- model_data$Happiness_Index - 
+  model_data$rf_predict
 ```
 
 You'll talk about random forests later in the semester. They're not a linear model, so they work a bit differently.
@@ -728,7 +732,8 @@ You'll talk about random forests later in the semester. They're not a linear mod
 
 
 ```r
-ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) + 
+ggplot(data = model_data, 
+       aes(x = Happiness_Index, y = rf_predict)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0)
 ```
@@ -741,7 +746,8 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) +
 
 
 ```r
-ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Happiness_Index, y = rf_resid)) + 
   geom_point() + 
   geom_smooth(method = "lm")
 ```
@@ -765,7 +771,8 @@ ggplot(data = model_data, aes(x = rf_resid)) +
 
 
 ```r
-ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) + 
+ggplot(data = model_data, 
+       aes(x = meh_model_resid, y = rf_resid)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0) + 
   coord_fixed(ratio = 1) + 
@@ -779,12 +786,15 @@ ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) +
 
 - Work in groups of 3-4
 - Pick 1 dataset:
-  - Education-related variables
-  - GDP-related variables
-  - other Indexes as variables
-  - Medical and Poverty-related variables
+  - Education-related variables (http://bit.ly/ds303_edu)
+  - GDP-related variables (http://bit.ly/ds303_gdp)
+  - other Indexes as variables (http://bit.ly/ds303_idx)
+  - Medical and Poverty-related variables (http://bit.ly/ds303_med)
 
-- Each dataset has 3 models fit: a knn model, a linear model, and a random forest
+- Each dataset has predicted values from 3 models: 
+  - a knn model
+  - a linear model
+  - a random forest
 
 - Compare the models, identify areas where each model doesn't fit, and find other variables (columns after Country in the csv) which might be important to include
     </textarea>
