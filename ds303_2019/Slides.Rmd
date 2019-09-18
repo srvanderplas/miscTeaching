@@ -35,6 +35,14 @@ pred <- tibble(year = seq(1895, 2015, .5)) %>%
 ```
 
 ---
+class: middle
+
+- Monday: Slides 1-37
+
+
+- Wednesday: [Slide 38](#wednesday-start)-?
+
+---
 class: middle,center
 ### In the beginning, there was the data...
 
@@ -351,7 +359,8 @@ model_data <- select(hdi_2017, Country, Happiness_Index,
                      Teen_Birth_Rate, Life_Exp_Birth, 
                      GDP, Gross_National_Income) %>%
   mutate(log10GDP = log10(GDP)) %>%
-  select(-GDP)
+  select(-GDP) %>%
+  na.omit()
 
 install.packages("GGally")
 library(GGally)
@@ -447,9 +456,24 @@ ggplot(data = model_data, aes(x = Gross_National_Income, y = bad_model_resid)) +
 
 
 ---
+name:wednesday-start
+## Get set up
+
+```{r}
+# Get essential code from monday's class - 
+#   - read in data
+#   - fit bad model
+#   - save bad model predictions/residuals
+source("http://bit.ly/ds303-monday")
+```
+
+---
 ## Fit another model
 ```{r}
-meh_model <- lm(Happiness_Index ~ ., data = select(model_data, -Country, -Gross_National_Income, -matches("bad_model")))
+meh_model <- lm(Happiness_Index ~ ., 
+                data = select(model_data, -Country, 
+                              -Gross_National_Income, 
+                              -matches("bad_model")))
 summary(meh_model)
 model_data$meh_model_resid <- resid(meh_model)
 ```
@@ -509,7 +533,8 @@ ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) +
 ---
 ## Model Diagnostics
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -519,7 +544,8 @@ ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) +
 ---
 ## Model Diagnostics
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = log10GDP, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -532,10 +558,12 @@ These diagnostics work for pretty much any type of model that generates predicti
 
 ```{r}
 library(randomForest)
-rf_model <- randomForest(Happiness_Index ~ ., data = select(model_data, -Country))
+rf_model <- randomForest(Happiness_Index ~ ., 
+                         data = select(model_data, -Country))
 print(rf_model)
 model_data$rf_predict <- predict(rf_model)
-model_data$rf_resid <- model_data$Happiness_Index - model_data$rf_predict
+model_data$rf_resid <- model_data$Happiness_Index - 
+  model_data$rf_predict
 ```
 
 You'll talk about random forests later in the semester. They're not a linear model, so they work a bit differently.
@@ -544,7 +572,8 @@ You'll talk about random forests later in the semester. They're not a linear mod
 ## Model Diagnostics
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) + 
+ggplot(data = model_data, 
+       aes(x = Happiness_Index, y = rf_predict)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0)
 ```
@@ -554,7 +583,8 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) +
 ## Model Diagnostics
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Happiness_Index, y = rf_resid)) + 
   geom_point() + 
   geom_smooth(method = "lm")
 ```
@@ -572,7 +602,8 @@ ggplot(data = model_data, aes(x = rf_resid)) +
 ## Model Comparison
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) + 
+ggplot(data = model_data, 
+       aes(x = meh_model_resid, y = rf_resid)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0) + 
   coord_fixed(ratio = 1) + 
@@ -580,100 +611,20 @@ ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) +
 ```
 
 ---
-class: middle, center
-## Cross Validation and Model Comparison (in R)
+## Your Turn
 
----
-## Tidy models
+- Work in groups of 3-4
+- Pick 1 dataset:
+  - Education-related variables
+  - GDP-related variables
+  - other Indexes as variables
+  - Medical and Poverty-related variables
 
-- A unified framework for modeling in R
+- Each dataset has predicted values from 3 models: 
+  - a knn model
+  - a linear model
+  - a random forest
 
-- Goal is to have the same (tidy) output for common models to facilitate comparisons
+- Compare the models, identify areas where each model doesn't fit, and find other variables (columns after Country in the csv) which might be important to include
 
-- `parsnip`: tidy interface for models,
 
-- `broom`: tidy format for model analysis objects, 
-
-- `yardstick`: tidy measures of model performance
-
-```{r, eval = F}
-library(tidyverse)
-install.packages(c("parsnip", "broom", "yardstick", "tidymodels", "AmesHousing"))
-```
-
----
-## Parsnip
-
-```{r}
-library(tidyverse)
-library(tidymodels)
-library(AmesHousing)
-ames <- make_ames()
-set.seed(4595)
-# Split data into training and test set
-data_split <- initial_split(ames, strata = "Sale_Price", p = 0.75)
-ames_train <- training(data_split)
-ames_test  <- testing(data_split)
-```
----
-## Parsnip
-
-```{r}
-rf_model <- rand_forest(mode = "regression") %>% set_engine("ranger") 
-linear_model <- linear_reg() %>% set_engine("lm")
-
-models <- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
-                         model_fcn = list(rf_model, linear_model)) %>%
-  dplyr::mutate(
-    res = purrr::map(
-      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
-                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
-    pred = purrr::map(res, predict, new_data = ames_test)
-  )
-```
-
----
-## Parsnip
-```{r}
-models$res[[1]]
-```
-
----
-## Parsnip
-```{r}
-models$res[[2]]
-```
-
----
-## Parsnip - Model Comparisons
-
-```{r, fig.width = 4, fig.height = 4, out.width = "75%"}
-ames_test_preds <- models %>%
-  # Get predictions and model names
-  select(model_name, pred) %>% 
-  # Make a long, skinny data frame
-  unnest() %>% 
-  # rename variables
-  rename(pred = .pred) %>% 
-  # For each model, 
-  group_by(model_name) %>% 
-  # number the rows 1:n(), where n() = 731
-  mutate(row = 1:n()) %>%  
-  # Put each model in a different column
-  spread(key = model_name, value = pred) %>% 
-  # Add in the actual test set data
-  bind_cols(ames_test) %>% 
-  # Go back to a long-form dataset where predictions are in one column
-  gather(key = "model_name", value = "pred", 
-         random_forest:linear_regression)
-```
-
----
-## Parsnip - Model Comparisons
-
-```{r, fig.width = 8, fig.height = 4, out.width = "100%"}
-ggplot(aes(x = log10(Sale_Price), y = pred), 
-       data = ames_test_preds) + 
-  geom_point() + facet_wrap(~model_name) + 
-  coord_fixed()
-```

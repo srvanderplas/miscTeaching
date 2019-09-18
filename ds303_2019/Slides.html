@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<html>
   <head>
     <title>Visual Diagnostics for Statistical Modeling</title>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <meta name="date" content="2018-09-16" />
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
@@ -24,6 +24,14 @@ class: inverse,middle,center
 # Randomness, Models, and Errors
 
 
+
+---
+class: middle
+
+- Monday: Slides 1-37
+
+
+- Wednesday: [Slide 38](#wednesday-start)-?
 
 ---
 class: middle,center
@@ -362,7 +370,8 @@ model_data &lt;- select(hdi_2017, Country, Happiness_Index,
                      Teen_Birth_Rate, Life_Exp_Birth, 
                      GDP, Gross_National_Income) %&gt;%
   mutate(log10GDP = log10(GDP)) %&gt;%
-  select(-GDP)
+  select(-GDP) %&gt;%
+  na.omit()
 
 install.packages("GGally")
 library(GGally)
@@ -494,10 +503,38 @@ ggplot(data = model_data, aes(x = Gross_National_Income, y = bad_model_resid)) +
 
 
 ---
+name:wednesday-start
+## Get set up
+
+
+```r
+# Get essential code from monday's class - 
+#   - read in data
+#   - fit bad model
+#   - save bad model predictions/residuals
+source("http://bit.ly/ds303-monday")
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   .default = col_double(),
+##   Country = col_character()
+## )
+```
+
+```
+## See spec(...) for full column specifications.
+```
+
+---
 ## Fit another model
 
 ```r
-meh_model &lt;- lm(Happiness_Index ~ ., data = select(model_data, -Country, -Gross_National_Income, -matches("bad_model")))
+meh_model &lt;- lm(Happiness_Index ~ ., 
+                data = select(model_data, -Country, 
+                              -Gross_National_Income, 
+                              -matches("bad_model")))
 summary(meh_model)
 ```
 
@@ -541,7 +578,7 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = meh_model_resid)) +
   geom_point() + geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -552,7 +589,7 @@ ggplot(data = model_data, aes(x = meh_model_resid, y = bad_model_resid)) +
   geom_point() + geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
 Removing a significant variable from the model and nothing changes...
 
 ---
@@ -565,7 +602,7 @@ ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -576,25 +613,13 @@ ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
 
 ```r
 ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
-  geom_point() + 
-  geom_smooth()
-```
-
-![](Slides_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
-
-
----
-## Model Diagnostics
-
-```r
-ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -606,12 +631,24 @@ ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) +
 ## Model Diagnostics
 
 ```r
-ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
+ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
 
 ![](Slides_files/figure-html/unnamed-chunk-30-1.png)&lt;!-- --&gt;
+
+
+---
+## Model Diagnostics
+
+```r
+ggplot(data = model_data, aes(x = Life_Exp_Birth, y = meh_model_resid)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+![](Slides_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
 
 
 
@@ -624,7 +661,7 @@ ggplot(data = model_data, aes(x = log10GDP, y = meh_model_resid)) +
   geom_smooth()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-32-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -675,8 +712,8 @@ print(rf_model)
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 3
 ## 
-##           Mean of squared residuals: 0.07221528
-##                     % Var explained: 94.3
+##           Mean of squared residuals: 0.06860588
+##                     % Var explained: 94.58
 ```
 
 ```r
@@ -696,7 +733,7 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_predict)) +
   geom_abline(slope = 1, intercept = 0)
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-33-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-34-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -709,7 +746,7 @@ ggplot(data = model_data, aes(x = Happiness_Index, y = rf_resid)) +
   geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-34-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -720,7 +757,7 @@ ggplot(data = model_data, aes(x = rf_resid)) +
   geom_histogram()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -735,241 +772,22 @@ ggplot(data = model_data, aes(x = meh_model_resid, y = rf_resid)) +
   geom_smooth(se = F)
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-37-1.png)&lt;!-- --&gt;
 
 ---
-class: middle, center
-## Cross Validation and Model Comparison (in R)
+## Your Turn
 
----
-## Tidy models
+- Work in groups of 3-4
+- Pick 1 dataset:
+  - Education-related variables
+  - GDP-related variables
+  - other Indexes as variables
+  - Medical and Poverty-related variables
 
-- A unified framework for modeling in R
+- Each dataset has 3 models fit: a knn model, a linear model, and a random forest
 
-- Goal is to have the same (tidy) output for common models to facilitate comparisons
-
-- `parsnip`: tidy interface for models,
-
-- `broom`: tidy format for model analysis objects, 
-
-- `yardstick`: tidy measures of model performance
-
-
-```r
-library(tidyverse)
-install.packages(c("parsnip", "broom", "yardstick", "tidymodels", "AmesHousing"))
-```
-
----
-## Parsnip
-
-
-```r
-library(tidyverse)
-library(tidymodels)
-```
-
-```
-## Registered S3 method overwritten by 'xts':
-##   method     from
-##   as.zoo.xts zoo
-```
-
-```
-## ── Attaching packages ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidymodels 0.0.2 ──
-```
-
-```
-## ✔ broom     0.5.2       ✔ recipes   0.1.7  
-## ✔ dials     0.0.2       ✔ rsample   0.0.5  
-## ✔ infer     0.4.0.1     ✔ yardstick 0.0.4  
-## ✔ parsnip   0.0.3.1
-```
-
-```
-## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidymodels_conflicts() ──
-## ✖ randomForest::combine() masks dplyr::combine()
-## ✖ scales::discard()       masks purrr::discard()
-## ✖ dplyr::filter()         masks stats::filter()
-## ✖ recipes::fixed()        masks stringr::fixed()
-## ✖ dplyr::lag()            masks stats::lag()
-## ✖ dials::margin()         masks randomForest::margin(), ggplot2::margin()
-## ✖ yardstick::spec()       masks readr::spec()
-## ✖ recipes::step()         masks stats::step()
-```
-
-```r
-library(AmesHousing)
-ames &lt;- make_ames()
-set.seed(4595)
-# Split data into training and test set
-data_split &lt;- initial_split(ames, strata = "Sale_Price", p = 0.75)
-ames_train &lt;- training(data_split)
-ames_test  &lt;- testing(data_split)
-```
----
-## Parsnip
-
-
-```r
-rf_model &lt;- rand_forest(mode = "regression") %&gt;% set_engine("ranger") 
-linear_model &lt;- linear_reg() %&gt;% set_engine("lm")
-
-models &lt;- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
-                         model_fcn = list(rf_model, linear_model)) %&gt;%
-  dplyr::mutate(
-    res = purrr::map(
-      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
-                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
-    pred = purrr::map(res, predict, new_data = ames_test)
-  )
-```
-
----
-## Parsnip
-
-```r
-models$res[[1]]
-```
-
-```
-## parsnip model object
-## 
-## Ranger result
-## 
-## Call:
-##  ranger::ranger(formula = formula, data = data, num.threads = 1,      verbose = FALSE, seed = sample.int(10^5, 1)) 
-## 
-## Type:                             Regression 
-## Number of trees:                  500 
-## Sample size:                      2199 
-## Number of independent variables:  5 
-## Mtry:                             2 
-## Target node size:                 5 
-## Variable importance mode:         none 
-## Splitrule:                        variance 
-## OOB prediction error (MSE):       0.008561296 
-## R squared (OOB):                  0.7320611
-```
-
----
-## Parsnip
-
-```r
-models$res[[2]]
-```
-
-```
-## parsnip model object
-## 
-## 
-## Call:
-## stats::lm(formula = formula, data = data)
-## 
-## Coefficients:
-##                                         (Intercept)  
-##                                          -1.270e+02  
-##                                           Longitude  
-##                                          -1.022e+00  
-##                                            Latitude  
-##                                           1.027e+00  
-##                                            Lot_Area  
-##                                           3.207e-06  
-##                           NeighborhoodCollege_Creek  
-##                                           8.930e-02  
-##                                NeighborhoodOld_Town  
-##                                          -6.539e-02  
-##                                 NeighborhoodEdwards  
-##                                          -9.178e-02  
-##                                NeighborhoodSomerset  
-##                                           1.694e-01  
-##                      NeighborhoodNorthridge_Heights  
-##                                           2.816e-01  
-##                                 NeighborhoodGilbert  
-##                                           6.931e-02  
-##                                  NeighborhoodSawyer  
-##                                          -6.870e-02  
-##                          NeighborhoodNorthwest_Ames  
-##                                           8.707e-02  
-##                             NeighborhoodSawyer_West  
-##                                           3.208e-02  
-##                                NeighborhoodMitchell  
-##                                           1.034e-01  
-##                               NeighborhoodBrookside  
-##                                          -5.795e-02  
-##                                NeighborhoodCrawford  
-##                                           1.538e-01  
-##                  NeighborhoodIowa_DOT_and_Rail_Road  
-##                                          -1.562e-01  
-##                              NeighborhoodTimberland  
-##                                           2.155e-01  
-##                              NeighborhoodNorthridge  
-##                                           2.995e-01  
-##                             NeighborhoodStone_Brook  
-##                                           2.783e-01  
-## NeighborhoodSouth_and_West_of_Iowa_State_University  
-##                                          -4.751e-02  
-##                             NeighborhoodClear_Creek  
-##                                           6.937e-02  
-##                          NeighborhoodMeadow_Village  
-##                                          -9.137e-02  
-##                               NeighborhoodBriardale  
-##                                          -1.271e-01  
-##                     NeighborhoodBloomington_Heights  
-##                                           1.086e-01  
-##                                 NeighborhoodVeenker  
-##                                           1.878e-01  
-##                         NeighborhoodNorthpark_Villa  
-##                                           4.285e-03  
-##                                 NeighborhoodBlueste  
-##                                           2.027e-02  
-##                                  NeighborhoodGreens  
-##                                           1.271e-01  
-##                             NeighborhoodGreen_Hills  
-##                                           3.741e-01  
-##                                NeighborhoodLandmark  
-##                                          -4.665e-02  
-##                                           Year_Sold  
-##                                          -3.332e-03
-```
-
----
-## Parsnip - Model Comparisons
-
-
-```r
-ames_test_preds &lt;- models %&gt;%
-  # Get predictions and model names
-  select(model_name, pred) %&gt;% 
-  # Make a long, skinny data frame
-  unnest() %&gt;% 
-  # rename variables
-  rename(pred = .pred) %&gt;% 
-  # For each model, 
-  group_by(model_name) %&gt;% 
-  # number the rows 1:n(), where n() = 731
-  mutate(row = 1:n()) %&gt;%  
-  # Put each model in a different column
-  spread(key = model_name, value = pred) %&gt;% 
-  # Add in the actual test set data
-  bind_cols(ames_test) %&gt;% 
-  # Go back to a long-form dataset where predictions are in one column
-  gather(key = "model_name", value = "pred", random_forest:linear_regression)
-```
-
----
-## Parsnip - Model Comparisons
-
-
-```r
-ggplot(aes(x = log10(Sale_Price), y = pred), data = ames_test_preds) + 
-  geom_point() + 
-  facet_wrap(~model_name)
-```
-
-&lt;img src="Slides_files/figure-html/unnamed-chunk-43-1.png" width="100%" /&gt;
+- Compare the models, identify areas where each model doesn't fit, and find other variables (columns after Country in the csv) which might be important to include
     </textarea>
-<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
 "highlightStyle": "github",
@@ -979,74 +797,16 @@ ggplot(aes(x = log10(Sale_Price), y = pred), data = ames_test_preds) +
 if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
   window.dispatchEvent(new Event('resize'));
 });
-(function(d) {
-  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
   if (!r) return;
   s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
   d.head.appendChild(s);
-})(document);
-
-(function(d) {
-  var el = d.getElementsByClassName("remark-slides-area");
-  if (!el) return;
-  var slide, slides = slideshow.getSlides(), els = el[0].children;
-  for (var i = 1; i < slides.length; i++) {
-    slide = slides[i];
-    if (slide.properties.continued === "true" || slide.properties.count === "false") {
-      els[i - 1].className += ' has-continuation';
-    }
-  }
-  var s = d.createElement("style");
-  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
-  d.head.appendChild(s);
-})(document);
-// delete the temporary CSS (for displaying all slides initially) when the user
-// starts to view slides
-(function() {
-  var deleted = false;
-  slideshow.on('beforeShowSlide', function(slide) {
-    if (deleted) return;
-    var sheets = document.styleSheets, node;
-    for (var i = 0; i < sheets.length; i++) {
-      node = sheets[i].ownerNode;
-      if (node.dataset["target"] !== "print-only") continue;
-      node.parentNode.removeChild(node);
-    }
-    deleted = true;
-  });
-})();
-// adds .remark-code-has-line-highlighted class to <pre> parent elements
-// of code chunks containing highlighted lines with class .remark-code-line-highlighted
-(function(d) {
-  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
-  const preParents = [];
-  const findPreParent = function(line, p = 0) {
-    if (p > 1) return null; // traverse up no further than grandparent
-    const el = line.parentElement;
-    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
-  };
-
-  for (let line of hlines) {
-    let pre = findPreParent(line);
-    if (pre && !preParents.includes(pre)) preParents.push(pre);
-  }
-  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
-})(document);</script>
+})();</script>
 
 <script>
 (function() {
-  var links = document.getElementsByTagName('a');
-  for (var i = 0; i < links.length; i++) {
-    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
-      links[i].target = '_blank';
-    }
-  }
-})();
-</script>
-
-<script>
-slideshow._releaseMath = function(el) {
-  var i, text, code, codes = el.getElementsByTagName('code');
+  var i, text, code, codes = document.getElementsByTagName('code');
   for (i = 0; i < codes.length;) {
     code = codes[i];
     if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
@@ -1060,8 +820,7 @@ slideshow._releaseMath = function(el) {
     }
     i++;
   }
-};
-slideshow._releaseMath(document);
+})();
 </script>
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
