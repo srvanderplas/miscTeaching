@@ -10,7 +10,8 @@ model_data <- select(hdi_2017, Country, Happiness_Index,
                      Teen_Birth_Rate, Life_Exp_Birth,
                      GDP, Gross_National_Income) %>%
   mutate(log10GDP = log10(GDP)) %>%
-  select(-GDP)
+  select(-GDP) %>%
+  na.omit()
 
 bad_model <- lm(Happiness_Index ~ ., data = select(model_data, -Country))
 summary(bad_model)
