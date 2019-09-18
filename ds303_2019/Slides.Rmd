@@ -12,7 +12,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.width = 9, fig.height = 6, dpi = 300)
+knitr::opts_chunk$set(echo = TRUE, fig.width = 9, fig.height = 6, dpi = 300, cache = T)
 
 library(tidyverse)
 theme_set(theme_bw())
@@ -911,14 +911,11 @@ ames_cv_loess <- ames_cv %>%
 ---
 ## Cross-Validation - Model Variability
 
-```{r}
-select(ames_cv_loess, id, pred_line) %>%
-  unnest() %>%
+```{r, warning = F, fig.width = 8, fig.height = 4, out.width = "100%"}
+select(ames_cv_loess, id, pred_line) %>% unnest() %>%
   ggplot() + 
   geom_point(aes(x = Gr_Liv_Area, y = Sale_Price), 
-             data = ames_train_1var, 
-             color = "red", alpha = .2) + 
-  geom_line(aes(x = Gr_Liv_Area, y =  pred, group = id), 
-            alpha = .1) + 
+             data = ames_train_1var, color = "red", alpha = .2) + 
+  geom_line(aes(x = Gr_Liv_Area, y =  pred, group = id), alpha = .1) + 
   scale_y_log10(breaks = c(50000, 100000, 150000, 300000, 500000))
 ```
