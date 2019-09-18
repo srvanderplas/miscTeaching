@@ -31,7 +31,9 @@ class: middle
 - Monday: Slides 1-37
 
 
-- Wednesday: [Slide 38](#wednesday-start)-?
+- Wednesday: [Slide 38](#wednesday-start)-59
+
+- Friday: [Slide 60](#friday-start) - end
 
 ---
 class: middle,center
@@ -574,18 +576,20 @@ model_data$meh_model_resid &lt;- resid(meh_model)
 
 
 ```r
-ggplot(data = model_data, aes(x = Happiness_Index, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Happiness_Index, y = meh_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
 
 ![](Slides_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
 
 ---
-## Model Diagnostics
+## Model Comparison
 
 
 ```r
-ggplot(data = model_data, aes(x = meh_model_resid, y = bad_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = meh_model_resid, y = bad_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
 
@@ -597,7 +601,8 @@ Removing a significant variable from the model and nothing changes...
 
 
 ```r
-ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Ineq_education, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -608,7 +613,8 @@ ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) +
 ## Model Diagnostics
 
 ```r
-ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Ineq_income, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -619,7 +625,8 @@ ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) +
 ## Model Diagnostics
 
 ```r
-ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -631,7 +638,8 @@ ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) +
 ## Model Diagnostics
 
 ```r
-ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -665,65 +673,105 @@ ggplot(data = model_data,
 
 ![](Slides_files/figure-html/unnamed-chunk-32-1.png)&lt;!-- --&gt;
 
+---
+## Generalized Linear Model Diagnostics - Leverage
+
+
+```r
+library(car)
+leveragePlots(meh_model, layout = c(2, 3))
+```
+
+&lt;img src="Slides_files/figure-html/unnamed-chunk-34-1.png" width="100%" /&gt;
+High-Leverage points have a large potential to affect the results of an analysis. They are not always visible from residual plots. 
+
+---
+## Generalized Linear Model Diagnostics - Leverage
+&lt;br/&gt;&lt;br/&gt;
+`$$\text{leverage at }x_i = h_{ii} = \frac{1}{n} + \frac{(x_i - \bar{x})^2}{\sum_i(x_i - \bar{x})^2}$$`
+
+Leverage is mostly important in functional regression models; it has relatively small effects in ensemble models such as random forests.
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+
+```r
+cutoff &lt;- 4/((nrow(model_data) - length(meh_model$coefficients) - 2))
+plot(meh_model, which = 4, cook.levels = cutoff)
+```
+
+![](Slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
+
+Cook's distance identifies points which are too influential.
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+
+```r
+res &lt;- influencePlot(meh_model, id.method = "identify", main = "Influence Plot", 
+                     sub = "Circle size is proportial to Cook's Distance")
+```
+
+![](Slides_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+Extra reading: 
+
+- [Studentized residuals](https://en.wikipedia.org/wiki/Studentized_residual) - residuals from leave-one-out cross-validation     
+(leave out that point, fit the model, predict for the left-out point, calculate the residual)
+
+- [Hat-values](https://en.wikipedia.org/wiki/Projection_matrix) - influence each response value has on the fitted value
+
+- [Cook's distance](https://en.wikipedia.org/wiki/Cook%27s_distance): the sum of all the changes in the regression model when observation `\(i\)` is removed `$$D_i = \frac{\sum_{j=1}^n (\hat{y}_j - \hat{y}_{j(i)})^2}{ps^2}$$` where p is the number of parameters and `\(s^2\)` is the mean squared error of the regression model
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+
+```r
+# Look at high influence or high leverage points
+model_data[c(23, 34, 47, 72, 97, 106, 130, 137), 
+           c("Country", "Happiness_Index", "meh_model_resid")]
+```
+
+```
+## # A tibble: 8 x 3
+##   Country      Happiness_Index meh_model_resid
+##   &lt;chr&gt;                  &lt;dbl&gt;           &lt;dbl&gt;
+## 1 Burundi                 3.78          0.127 
+## 2 Ivory Coast             4.94          1.57  
+## 3 Egypt                   4.17         -0.767 
+## 4 Comoros                 3.97         -0.0500
+## 5 Nigeria                 5.26          1.63  
+## 6 Pakistan                5.65          0.999 
+## 7 Tanzania                3.23         -1.80  
+## 8 South Africa            4.72          0.180
+```
+(Comoros is an island nation off of the coast of eastern Africa. )
+
+
 
 ---
 ## Model Diagnostics
 
-These diagnostics work for pretty much any type of model that generates predictions.
+Residual-based diagnostics work for pretty much any type of model that generates predictions.
 
 
 ```r
 library(randomForest)
-```
-
-```
-## randomForest 4.6-14
-```
-
-```
-## Type rfNews() to see new features/changes/bug fixes.
-```
-
-```
-## 
-## Attaching package: 'randomForest'
-```
-
-```
-## The following object is masked from 'package:dplyr':
-## 
-##     combine
-```
-
-```
-## The following object is masked from 'package:ggplot2':
-## 
-##     margin
-```
-
-```r
 rf_model &lt;- randomForest(Happiness_Index ~ ., 
                          data = select(model_data, -Country))
 print(rf_model)
-```
-
-```
-## 
-## Call:
-##  randomForest(formula = Happiness_Index ~ ., data = select(model_data,      -Country)) 
-##                Type of random forest: regression
-##                      Number of trees: 500
-## No. of variables tried at each split: 3
-## 
-##           Mean of squared residuals: 0.06590837
-##                     % Var explained: 94.8
-```
-
-```r
 model_data$rf_predict &lt;- predict(rf_model)
 model_data$rf_resid &lt;- model_data$Happiness_Index - 
   model_data$rf_predict
 ```
+
+
 
 You'll talk about random forests later in the semester. They're not a linear model, so they work a bit differently.
 
@@ -738,7 +786,7 @@ ggplot(data = model_data,
   geom_abline(slope = 1, intercept = 0)
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-34-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-40-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -752,7 +800,7 @@ ggplot(data = model_data,
   geom_smooth(method = "lm")
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-41-1.png)&lt;!-- --&gt;
 
 ---
 ## Model Diagnostics
@@ -763,7 +811,7 @@ ggplot(data = model_data, aes(x = rf_resid)) +
   geom_histogram()
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-42-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -779,7 +827,7 @@ ggplot(data = model_data,
   geom_smooth(se = F)
 ```
 
-![](Slides_files/figure-html/unnamed-chunk-37-1.png)&lt;!-- --&gt;
+![](Slides_files/figure-html/unnamed-chunk-43-1.png)&lt;!-- --&gt;
 
 ---
 ## Your Turn
@@ -796,7 +844,259 @@ ggplot(data = model_data,
   - a linear model
   - a random forest
 
-- Compare the models, identify areas where each model doesn't fit, and find other variables (columns after Country in the csv) which might be important to include
+- Compare the models, identify areas where each model doesn't fit, and (if you have time) find other variables (columns after Country in the csv) which might be important to include
+
+
+---
+class:middle,inverse,center
+name: friday-start
+## Visualizations for Cross-Validation 
+
+---
+## Tidy models
+
+- A unified framework for modeling in R
+
+- Goal is to have the same (tidy) output for common models to facilitate comparisons
+
+- `parsnip`: tidy interface for models,
+
+- `broom`: tidy format for model analysis objects, 
+
+- `yardstick`: tidy measures of model performance
+
+
+```r
+library(tidyverse)
+install.packages(c("parsnip", "broom", "yardstick", "rsample", "tidymodels", "AmesHousing"))
+```
+
+---
+## Parsnip
+
+
+```r
+library(tidyverse)
+library(tidymodels)
+```
+
+```
+## Registered S3 method overwritten by 'xts':
+##   method     from
+##   as.zoo.xts zoo
+```
+
+```
+## Registered S3 methods overwritten by 'lme4':
+##   method                          from
+##   cooks.distance.influence.merMod car 
+##   influence.merMod                car 
+##   dfbeta.influence.merMod         car 
+##   dfbetas.influence.merMod        car
+```
+
+```
+## ── Attaching packages ─────────────────────────────────────────────────────────── tidymodels 0.0.2 ──
+```
+
+```
+## ✔ broom     0.5.2       ✔ recipes   0.1.6  
+## ✔ dials     0.0.2       ✔ rsample   0.0.5  
+## ✔ infer     0.4.0.1     ✔ yardstick 0.0.4  
+## ✔ parsnip   0.0.3.1
+```
+
+```
+## ── Conflicts ────────────────────────────────────────────────────────────── tidymodels_conflicts() ──
+## ✖ randomForest::combine() masks dplyr::combine()
+## ✖ scales::discard()       masks purrr::discard()
+## ✖ dplyr::filter()         masks stats::filter()
+## ✖ recipes::fixed()        masks stringr::fixed()
+## ✖ dplyr::lag()            masks stats::lag()
+## ✖ dials::margin()         masks randomForest::margin(), ggplot2::margin()
+## ✖ car::recode()           masks dplyr::recode()
+## ✖ car::some()             masks purrr::some()
+## ✖ yardstick::spec()       masks readr::spec()
+## ✖ recipes::step()         masks stats::step()
+```
+
+```r
+library(AmesHousing)
+ames &lt;- make_ames()
+set.seed(4595)
+# Split data into training and test set
+data_split &lt;- initial_split(ames, strata = "Sale_Price", p = 0.75)
+ames_train &lt;- training(data_split)
+ames_test  &lt;- testing(data_split)
+ames_cv &lt;- vfold_cv(ames_train, v = 10, strata = "Sale_Price", breaks = 8)
+```
+---
+## Parsnip
+
+
+```r
+rf_model &lt;- rand_forest(mode = "regression") %&gt;% set_engine("ranger") 
+linear_model &lt;- linear_reg() %&gt;% set_engine("lm")
+
+models &lt;- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
+                         model_fcn = list(rf_model, linear_model)) %&gt;%
+  dplyr::mutate(
+    res = purrr::map(
+      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
+                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
+    pred = purrr::map(res, predict, new_data = ames_test)
+  )
+```
+
+---
+## Parsnip
+
+```r
+models$res[[1]]
+```
+
+```
+## parsnip model object
+## 
+## Ranger result
+## 
+## Call:
+##  ranger::ranger(formula = formula, data = data, num.threads = 1,      verbose = FALSE, seed = sample.int(10^5, 1)) 
+## 
+## Type:                             Regression 
+## Number of trees:                  500 
+## Sample size:                      2199 
+## Number of independent variables:  5 
+## Mtry:                             2 
+## Target node size:                 5 
+## Variable importance mode:         none 
+## Splitrule:                        variance 
+## OOB prediction error (MSE):       0.008605917 
+## R squared (OOB):                  0.7306647
+```
+
+---
+## Parsnip
+
+```r
+models$res[[2]]
+```
+
+```
+## parsnip model object
+## 
+## 
+## Call:
+## stats::lm(formula = formula, data = data)
+## 
+## Coefficients:
+##                                         (Intercept)  
+##                                          -1.270e+02  
+##                                           Longitude  
+##                                          -1.022e+00  
+##                                            Latitude  
+##                                           1.027e+00  
+##                                            Lot_Area  
+##                                           3.207e-06  
+##                           NeighborhoodCollege_Creek  
+##                                           8.930e-02  
+##                                NeighborhoodOld_Town  
+##                                          -6.539e-02  
+##                                 NeighborhoodEdwards  
+##                                          -9.178e-02  
+##                                NeighborhoodSomerset  
+##                                           1.694e-01  
+##                      NeighborhoodNorthridge_Heights  
+##                                           2.816e-01  
+##                                 NeighborhoodGilbert  
+##                                           6.931e-02  
+##                                  NeighborhoodSawyer  
+##                                          -6.870e-02  
+##                          NeighborhoodNorthwest_Ames  
+##                                           8.707e-02  
+##                             NeighborhoodSawyer_West  
+##                                           3.208e-02  
+##                                NeighborhoodMitchell  
+##                                           1.034e-01  
+##                               NeighborhoodBrookside  
+##                                          -5.795e-02  
+##                                NeighborhoodCrawford  
+##                                           1.538e-01  
+##                  NeighborhoodIowa_DOT_and_Rail_Road  
+##                                          -1.562e-01  
+##                              NeighborhoodTimberland  
+##                                           2.155e-01  
+##                              NeighborhoodNorthridge  
+##                                           2.995e-01  
+##                             NeighborhoodStone_Brook  
+##                                           2.783e-01  
+## NeighborhoodSouth_and_West_of_Iowa_State_University  
+##                                          -4.751e-02  
+##                             NeighborhoodClear_Creek  
+##                                           6.937e-02  
+##                          NeighborhoodMeadow_Village  
+##                                          -9.137e-02  
+##                               NeighborhoodBriardale  
+##                                          -1.271e-01  
+##                     NeighborhoodBloomington_Heights  
+##                                           1.086e-01  
+##                                 NeighborhoodVeenker  
+##                                           1.878e-01  
+##                         NeighborhoodNorthpark_Villa  
+##                                           4.285e-03  
+##                                 NeighborhoodBlueste  
+##                                           2.027e-02  
+##                                  NeighborhoodGreens  
+##                                           1.271e-01  
+##                             NeighborhoodGreen_Hills  
+##                                           3.741e-01  
+##                                NeighborhoodLandmark  
+##                                          -4.665e-02  
+##                                           Year_Sold  
+##                                          -3.332e-03
+```
+
+---
+## Parsnip - Model Comparisons
+
+
+```r
+ames_test_preds &lt;- models %&gt;%
+  # Get predictions and model names
+  select(model_name, pred) %&gt;% 
+  # Make a long, skinny data frame
+  unnest() %&gt;% 
+  # rename variables
+  rename(pred = .pred) %&gt;% 
+  # For each model, 
+  group_by(model_name) %&gt;% 
+  # number the rows 1:n(), where n() = 731
+  mutate(row = 1:n()) %&gt;%  
+  # Put each model in a different column
+  spread(key = model_name, value = pred) %&gt;% 
+  # Add in the actual test set data
+  bind_cols(ames_test) %&gt;% 
+  # Go back to a long-form dataset where predictions are in one column
+  gather(key = "model_name", value = "pred", 
+         random_forest:linear_regression)
+```
+
+---
+## Model Comparisons
+
+
+```r
+ggplot(aes(x = log10(Sale_Price), y = pred), 
+       data = ames_test_preds) + 
+  geom_point() + facet_wrap(~model_name) + 
+  coord_fixed()
+```
+
+&lt;img src="Slides_files/figure-html/unnamed-chunk-50-1.png" width="100%" /&gt;
+
+
+---
+##
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({

@@ -40,7 +40,9 @@ class: middle
 - Monday: Slides 1-37
 
 
-- Wednesday: [Slide 38](#wednesday-start)-?
+- Wednesday: [Slide 38](#wednesday-start)-59
+
+- Friday: [Slide 60](#friday-start) - end
 
 ---
 class: middle,center
@@ -482,15 +484,17 @@ model_data$meh_model_resid <- resid(meh_model)
 ## Model Diagnostics
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Happiness_Index, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Happiness_Index, y = meh_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
 
 ---
-## Model Diagnostics
+## Model Comparison
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = meh_model_resid, y = bad_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = meh_model_resid, y = bad_model_resid)) + 
   geom_point() + geom_smooth(method = "lm")
 ```
 Removing a significant variable from the model and nothing changes...
@@ -499,7 +503,8 @@ Removing a significant variable from the model and nothing changes...
 ## Model Diagnostics
 
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Ineq_education, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -507,7 +512,8 @@ ggplot(data = model_data, aes(x = Ineq_education, y = meh_model_resid)) +
 ---
 ## Model Diagnostics
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Ineq_income, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -515,7 +521,8 @@ ggplot(data = model_data, aes(x = Ineq_income, y = meh_model_resid)) +
 ---
 ## Model Diagnostics
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Ineq_Life_Exp, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -524,7 +531,8 @@ ggplot(data = model_data, aes(x = Ineq_Life_Exp, y = meh_model_resid)) +
 ---
 ## Model Diagnostics
 ```{r, fig.width = 6, fig.height = 3, message = F, warning = F}
-ggplot(data = model_data, aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
+ggplot(data = model_data, 
+       aes(x = Teen_Birth_Rate, y = meh_model_resid)) + 
   geom_point() + 
   geom_smooth()
 ```
@@ -550,13 +558,85 @@ ggplot(data = model_data,
   geom_smooth()
 ```
 
+---
+## Generalized Linear Model Diagnostics - Leverage
+
+```{r, fig.width = 8, fig.height = 5, out.width = "100%", eval = F}
+library(car)
+leveragePlots(meh_model, layout = c(2, 3))
+```
+
+```{r, fig.width = 8, fig.height = 5, out.width = "100%", echo = F}
+suppressMessages(library(car))
+leveragePlots(meh_model, layout = c(2, 3))
+```
+High-Leverage points have a large potential to affect the results of an analysis. They are not always visible from residual plots. 
+
+---
+## Generalized Linear Model Diagnostics - Leverage
+<br/><br/>
+$$\text{leverage at }x_i = h_{ii} = \frac{1}{n} + \frac{(x_i - \bar{x})^2}{\sum_i(x_i - \bar{x})^2}$$
+
+Leverage is mostly important in functional regression models; it has relatively small effects in ensemble models such as random forests.
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+```{r, fig.width = 8, fig.height = 4}
+cutoff <- 4/((nrow(model_data) - length(meh_model$coefficients) - 2))
+plot(meh_model, which = 4, cook.levels = cutoff)
+```
+
+Cook's distance identifies points which are too influential.
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+```{r, warning = F, message = F, fig.width = 8, fig.height = 4}
+res <- influencePlot(meh_model, id.method = "identify", main = "Influence Plot", 
+                     sub = "Circle size is proportial to Cook's Distance")
+```
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+Extra reading: 
+
+- [Studentized residuals](https://en.wikipedia.org/wiki/Studentized_residual) - residuals from leave-one-out cross-validation     
+(leave out that point, fit the model, predict for the left-out point, calculate the residual)
+
+- [Hat-values](https://en.wikipedia.org/wiki/Projection_matrix) - influence each response value has on the fitted value
+
+- [Cook's distance](https://en.wikipedia.org/wiki/Cook%27s_distance): the sum of all the changes in the regression model when observation $i$ is removed $$D_i = \frac{\sum_{j=1}^n (\hat{y}_j - \hat{y}_{j(i)})^2}{ps^2}$$ where p is the number of parameters and $s^2$ is the mean squared error of the regression model
+
+---
+## Generalized Linear Model Diagnostics - Influence
+
+```{r}
+# Look at high influence or high leverage points
+model_data[c(23, 34, 47, 72, 97, 106, 130, 137), 
+           c("Country", "Happiness_Index", "meh_model_resid")]
+```
+(Comoros is an island nation off of the coast of eastern Africa. )
+
+
 
 ---
 ## Model Diagnostics
 
-These diagnostics work for pretty much any type of model that generates predictions.
+Residual-based diagnostics work for pretty much any type of model that generates predictions.
 
-```{r}
+```{r, eval = F}
+library(randomForest)
+rf_model <- randomForest(Happiness_Index ~ ., 
+                         data = select(model_data, -Country))
+print(rf_model)
+model_data$rf_predict <- predict(rf_model)
+model_data$rf_resid <- model_data$Happiness_Index - 
+  model_data$rf_predict
+```
+
+```{r, eval = T, include = F}
 library(randomForest)
 rf_model <- randomForest(Happiness_Index ~ ., 
                          data = select(model_data, -Country))
@@ -629,3 +709,186 @@ ggplot(data = model_data,
 
 
 ---
+class:middle,inverse,center
+name: friday-start
+## Visualizations for Cross-Validation 
+
+---
+## Tidy models
+
+- A unified framework for modeling in R
+
+- Goal is to have the same (tidy) output for common models to facilitate comparisons
+
+- `parsnip`: tidy interface for models,
+
+- `broom`: tidy format for model analysis objects, 
+
+- `yardstick`: tidy measures of model performance
+
+```{r, eval = F}
+library(tidyverse)
+install.packages(c("parsnip", "broom", "yardstick", "rsample", "tidymodels", "AmesHousing"))
+```
+
+---
+## Parsnip
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(AmesHousing)
+ames <- make_ames()
+set.seed(4595)
+# Split data into training and test set
+data_split <- initial_split(ames, strata = "Sale_Price", p = 0.9)
+ames_train <- training(data_split)
+ames_test  <- testing(data_split)
+```
+---
+## Parsnip
+
+```{r}
+rf_model <- rand_forest(mode = "regression") %>% set_engine("ranger") 
+linear_model <- linear_reg() %>% set_engine("lm")
+
+models <- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
+                         model_fcn = list(rf_model, linear_model)) %>%
+  dplyr::mutate(
+    res = purrr::map(
+      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
+                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
+    pred = purrr::map(res, predict, new_data = ames_test)
+  )
+```
+
+---
+## Parsnip
+```{r}
+models$res[[1]]
+```
+
+---
+## Parsnip
+```{r}
+models$res[[2]]
+```
+
+---
+## Parsnip - Model Comparisons
+
+```{r, fig.width = 4, fig.height = 4, out.width = "75%"}
+ames_test_preds <- models %>%
+  # Get predictions and model names
+  select(model_name, pred) %>% 
+  # Make a long, skinny data frame
+  unnest() %>% 
+  # rename variables
+  rename(pred = .pred) %>% 
+  # For each model, 
+  group_by(model_name) %>% 
+  # number the rows 1:n(), where n() = 731
+  mutate(row = 1:n()) %>%  
+  # Put each model in a different column
+  spread(key = model_name, value = pred) %>% 
+  # Add in the actual test set data
+  bind_cols(ames_test) %>% 
+  # Go back to a long-form dataset where predictions are in one column
+  gather(key = "model_name", value = "pred", 
+         random_forest:linear_regression)
+```
+
+---
+## Model Comparisons
+
+```{r, fig.width = 8, fig.height = 4, out.width = "100%"}
+ggplot(aes(x = log10(Sale_Price), y = pred), 
+       data = ames_test_preds) + 
+  geom_point() + facet_wrap(~model_name) + 
+  coord_fixed() + 
+  ggtitle("Test Set Predictions")
+```
+
+---
+## Fit a model
+
+```{r, include = F, eval = F}
+bunch_of_models <- tibble(variable = names(select(ames_train, -Sale_Price)),
+       formula = paste("log10(Sale_Price) ~", variable) %>% purrr::map(as.formula)) %>%
+  mutate(model = purrr::map(formula, ~lm(., data = ames_train)),
+         msum = purrr::map(model, summary),
+         rsq = purrr::map_dbl(msum, "adj.r.squared"),
+         df = purrr::map_int(model, "rank")) %>%
+  arrange(desc(rsq))
+```
+
+---
+
+## Cross-Validation
+
+```{r}
+ames_train_1var <- select(ames_train, Sale_Price, Gr_Liv_Area)
+ames_cv <- vfold_cv(ames_train_1var, v = 100, strata = "Sale_Price", breaks = 8)
+ames_cv[1,]
+ames_cv$splits[[1]]
+analysis(ames_cv$splits[[1]])
+assessment(ames_cv$splits[[1]])
+```
+
+---
+
+## Cross-Validation
+
+```{r, fig.width = 4, fig.height = 4, out.width = "50%"}
+# Create our model fitting function
+ames_lm <- function(cv) lm(formula = log10(Sale_Price) ~ Gr_Liv_Area,
+                           data = as.data.frame(cv))
+
+ames_cv_lm <- ames_cv %>% 
+  # map takes each set and applies a function
+  mutate(model = purrr::map(splits, ames_lm)) %>%
+  # get out the coefficients
+  mutate(coefs = purrr::map(model, "coefficients"),
+         slope = purrr::map_dbl(coefs, "Gr_Liv_Area"),
+         intercept = purrr::map_dbl(coefs, "(Intercept)"))
+
+ggplot(data = ames_cv_lm) + 
+  geom_histogram(aes(x = slope)) + 
+  ggtitle("Cross-Validated Slope Values")
+```
+
+---
+
+## Cross-Validation
+
+```{r}
+ames_loess <- function(cv) {
+  loess(Sale_Price ~ Gr_Liv_Area, 
+        data = analysis(cv))
+}
+
+# Make a table of possible predictive values
+output_range <- tibble(Gr_Liv_Area = min(ames$Gr_Liv_Area):max(ames$Gr_Liv_Area)) 
+
+# Get regression lines and assessment set predictions
+ames_cv_loess <- ames_cv %>% 
+  mutate(
+    model = purrr::map(splits, ames_loess),
+    pred_line = purrr::map(model, predict, newdata = output_range),
+    pred_line = purrr::map(
+      pred_line, ~bind_cols(output_range, pred = .)),
+    pred_assessment = purrr::map2(
+      model, splits, ~predict(.x, newdata = assessment(.y))),
+    pred_assessment = purrr::map2(
+      pred_assessment, splits, ~bind_cols(assessment(.y), pred = .x)))
+```
+
+---
+## Cross-Validation
+
+```{r}
+select(ames_cv_loess, id, pred_line) %>%
+  unnest() %>%
+  ggplot(aes(x = Gr_Liv_Area, y =  pred, group = id)) + 
+  geom_line(alpha = .05)
+```
