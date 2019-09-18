@@ -726,15 +726,18 @@ name: friday-start
 
 - `yardstick`: tidy measures of model performance
 
+- `rsample`: tidy ways to resample data (cross-validation, etc.)
+
 ```{r, eval = F}
 library(tidyverse)
-install.packages(c("parsnip", "broom", "yardstick", "rsample", "tidymodels", "AmesHousing"))
+install.packages(c("parsnip", "broom", "yardstick", 
+                   "rsample", "tidymodels", "AmesHousing"))
 ```
 
 ---
-## Parsnip
+## The `parsnip` package
 
-```{r}
+```{r, message = F, warning = F}
 library(tidyverse)
 library(tidymodels)
 library(AmesHousing)
@@ -745,20 +748,31 @@ data_split <- initial_split(ames, strata = "Sale_Price", p = 0.9)
 ames_train <- training(data_split)
 ames_test  <- testing(data_split)
 ```
+
 ---
 ## Parsnip
 
 ```{r}
-rf_model <- rand_forest(mode = "regression") %>% set_engine("ranger") 
-linear_model <- linear_reg() %>% set_engine("lm")
+rf_model <- rand_forest(mode = "regression") %>% 
+  set_engine("ranger") # set_engine specifies 
+                       # how the model is fit
+linear_model <- linear_reg() %>% 
+  set_engine("lm")
 
-models <- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
-                         model_fcn = list(rf_model, linear_model)) %>%
+models <- tibble::tibble(
+  model_name = c("random_forest", "linear_regression"), 
+  model_fcn = list(rf_model, linear_model)) %>%
   dplyr::mutate(
+    # fit using the training set
     res = purrr::map(
-      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
-                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
-    pred = purrr::map(res, predict, new_data = ames_test)
+      model_fcn, 
+      ~fit(., formula = log10(Sale_Price) ~ 
+             Longitude + Latitude + 
+             Lot_Area + Neighborhood + 
+             Year_Sold, data = ames_train)),
+    # predict based on the test set
+    pred = purrr::map(res, predict, 
+                      new_data = ames_test)
   )
 ```
 
@@ -809,9 +823,6 @@ ggplot(aes(x = log10(Sale_Price), y = pred),
   ggtitle("Test Set Predictions")
 ```
 
----
-## Fit a model
-
 ```{r, include = F, eval = F}
 bunch_of_models <- tibble(variable = names(select(ames_train, -Sale_Price)),
        formula = paste("log10(Sale_Price) ~", variable) %>% purrr::map(as.formula)) %>%
@@ -828,9 +839,14 @@ bunch_of_models <- tibble(variable = names(select(ames_train, -Sale_Price)),
 
 ```{r}
 ames_train_1var <- select(ames_train, Sale_Price, Gr_Liv_Area)
-ames_cv <- vfold_cv(ames_train_1var, v = 100, strata = "Sale_Price", breaks = 8)
+ames_cv <- vfold_cv(ames_train_1var, v = 30, strata = "Sale_Price", breaks = 8)
 ames_cv[1,]
 ames_cv$splits[[1]]
+```
+
+---
+## Cross-Validation
+```{r}
 analysis(ames_cv$splits[[1]])
 assessment(ames_cv$splits[[1]])
 ```
@@ -839,10 +855,12 @@ assessment(ames_cv$splits[[1]])
 
 ## Cross-Validation
 
-```{r, fig.width = 4, fig.height = 4, out.width = "50%"}
+```{r}
 # Create our model fitting function
-ames_lm <- function(cv) lm(formula = log10(Sale_Price) ~ Gr_Liv_Area,
-                           data = as.data.frame(cv))
+ames_lm <- function(cv) {
+  lm(formula = log10(Sale_Price) ~ Gr_Liv_Area,
+     data = as.data.frame(cv))
+}
 
 ames_cv_lm <- ames_cv %>% 
   # map takes each set and applies a function
@@ -851,14 +869,18 @@ ames_cv_lm <- ames_cv %>%
   mutate(coefs = purrr::map(model, "coefficients"),
          slope = purrr::map_dbl(coefs, "Gr_Liv_Area"),
          intercept = purrr::map_dbl(coefs, "(Intercept)"))
+```
 
+---
+## Cross-Validation - Parameter Estimate Error
+
+```{r, fig.width = 4, fig.height = 4, out.width = "50%", message = F}
 ggplot(data = ames_cv_lm) + 
   geom_histogram(aes(x = slope)) + 
   ggtitle("Cross-Validated Slope Values")
 ```
 
 ---
-
 ## Cross-Validation
 
 ```{r}
@@ -868,27 +890,35 @@ ames_loess <- function(cv) {
 }
 
 # Make a table of possible predictive values
-output_range <- tibble(Gr_Liv_Area = min(ames$Gr_Liv_Area):max(ames$Gr_Liv_Area)) 
+output_range <- tibble(
+  Gr_Liv_Area = min(ames$Gr_Liv_Area):max(ames$Gr_Liv_Area)
+) 
 
 # Get regression lines and assessment set predictions
 ames_cv_loess <- ames_cv %>% 
   mutate(
     model = purrr::map(splits, ames_loess),
-    pred_line = purrr::map(model, predict, newdata = output_range),
-    pred_line = purrr::map(
-      pred_line, ~bind_cols(output_range, pred = .)),
+    pred_line = purrr::map(model, ~bind_cols(
+      output_range, 
+      pred = predict(., newdata = output_range))),
     pred_assessment = purrr::map2(
-      model, splits, ~predict(.x, newdata = assessment(.y))),
-    pred_assessment = purrr::map2(
-      pred_assessment, splits, ~bind_cols(assessment(.y), pred = .x)))
+      model, splits, ~bind_cols(
+        assessment(.y), 
+        pred = predict(.x, newdata = assessment(.y))))
+  )
 ```
 
 ---
-## Cross-Validation
+## Cross-Validation - Model Variability
 
 ```{r}
 select(ames_cv_loess, id, pred_line) %>%
   unnest() %>%
-  ggplot(aes(x = Gr_Liv_Area, y =  pred, group = id)) + 
-  geom_line(alpha = .05)
+  ggplot() + 
+  geom_point(aes(x = Gr_Liv_Area, y = Sale_Price), 
+             data = ames_train_1var, 
+             color = "red", alpha = .2) + 
+  geom_line(aes(x = Gr_Liv_Area, y =  pred, group = id), 
+            alpha = .1) + 
+  scale_y_log10(breaks = c(50000, 100000, 150000, 300000, 500000))
 ```

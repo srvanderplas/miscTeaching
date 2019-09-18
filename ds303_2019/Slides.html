@@ -865,86 +865,56 @@ name: friday-start
 
 - `yardstick`: tidy measures of model performance
 
+- `rsample`: tidy ways to resample data (cross-validation, etc.)
+
 
 ```r
 library(tidyverse)
-install.packages(c("parsnip", "broom", "yardstick", "rsample", "tidymodels", "AmesHousing"))
+install.packages(c("parsnip", "broom", "yardstick", 
+                   "rsample", "tidymodels", "AmesHousing"))
 ```
 
 ---
-## Parsnip
+## The `parsnip` package
 
 
 ```r
 library(tidyverse)
 library(tidymodels)
-```
-
-```
-## Registered S3 method overwritten by 'xts':
-##   method     from
-##   as.zoo.xts zoo
-```
-
-```
-## Registered S3 methods overwritten by 'lme4':
-##   method                          from
-##   cooks.distance.influence.merMod car 
-##   influence.merMod                car 
-##   dfbeta.influence.merMod         car 
-##   dfbetas.influence.merMod        car
-```
-
-```
-## ── Attaching packages ─────────────────────────────────────────────────────────── tidymodels 0.0.2 ──
-```
-
-```
-## ✔ broom     0.5.2       ✔ recipes   0.1.6  
-## ✔ dials     0.0.2       ✔ rsample   0.0.5  
-## ✔ infer     0.4.0.1     ✔ yardstick 0.0.4  
-## ✔ parsnip   0.0.3.1
-```
-
-```
-## ── Conflicts ────────────────────────────────────────────────────────────── tidymodels_conflicts() ──
-## ✖ randomForest::combine() masks dplyr::combine()
-## ✖ scales::discard()       masks purrr::discard()
-## ✖ dplyr::filter()         masks stats::filter()
-## ✖ recipes::fixed()        masks stringr::fixed()
-## ✖ dplyr::lag()            masks stats::lag()
-## ✖ dials::margin()         masks randomForest::margin(), ggplot2::margin()
-## ✖ car::recode()           masks dplyr::recode()
-## ✖ car::some()             masks purrr::some()
-## ✖ yardstick::spec()       masks readr::spec()
-## ✖ recipes::step()         masks stats::step()
-```
-
-```r
 library(AmesHousing)
 ames &lt;- make_ames()
 set.seed(4595)
 # Split data into training and test set
-data_split &lt;- initial_split(ames, strata = "Sale_Price", p = 0.75)
+data_split &lt;- initial_split(ames, strata = "Sale_Price", p = 0.9)
 ames_train &lt;- training(data_split)
 ames_test  &lt;- testing(data_split)
-ames_cv &lt;- vfold_cv(ames_train, v = 10, strata = "Sale_Price", breaks = 8)
 ```
+
 ---
 ## Parsnip
 
 
 ```r
-rf_model &lt;- rand_forest(mode = "regression") %&gt;% set_engine("ranger") 
-linear_model &lt;- linear_reg() %&gt;% set_engine("lm")
+rf_model &lt;- rand_forest(mode = "regression") %&gt;% 
+  set_engine("ranger") # set_engine specifies 
+                       # how the model is fit
+linear_model &lt;- linear_reg() %&gt;% 
+  set_engine("lm")
 
-models &lt;- tibble::tibble(model_name = c("random_forest", "linear_regression"), 
-                         model_fcn = list(rf_model, linear_model)) %&gt;%
+models &lt;- tibble::tibble(
+  model_name = c("random_forest", "linear_regression"), 
+  model_fcn = list(rf_model, linear_model)) %&gt;%
   dplyr::mutate(
+    # fit using the training set
     res = purrr::map(
-      model_fcn, ~fit(., formula = log10(Sale_Price) ~ Longitude + Latitude + 
-                        Lot_Area + Neighborhood + Year_Sold, data = ames_train)),
-    pred = purrr::map(res, predict, new_data = ames_test)
+      model_fcn, 
+      ~fit(., formula = log10(Sale_Price) ~ 
+             Longitude + Latitude + 
+             Lot_Area + Neighborhood + 
+             Year_Sold, data = ames_train)),
+    # predict based on the test set
+    pred = purrr::map(res, predict, 
+                      new_data = ames_test)
   )
 ```
 
@@ -965,14 +935,14 @@ models$res[[1]]
 ## 
 ## Type:                             Regression 
 ## Number of trees:                  500 
-## Sample size:                      2199 
+## Sample size:                      2639 
 ## Number of independent variables:  5 
 ## Mtry:                             2 
 ## Target node size:                 5 
 ## Variable importance mode:         none 
 ## Splitrule:                        variance 
-## OOB prediction error (MSE):       0.008605917 
-## R squared (OOB):                  0.7306647
+## OOB prediction error (MSE):       0.00836771 
+## R squared (OOB):                  0.7352824
 ```
 
 ---
@@ -991,69 +961,69 @@ models$res[[2]]
 ## 
 ## Coefficients:
 ##                                         (Intercept)  
-##                                          -1.270e+02  
+##                                          -1.520e+02  
 ##                                           Longitude  
-##                                          -1.022e+00  
+##                                          -1.363e+00  
 ##                                            Latitude  
-##                                           1.027e+00  
+##                                           8.168e-01  
 ##                                            Lot_Area  
-##                                           3.207e-06  
+##                                           3.148e-06  
 ##                           NeighborhoodCollege_Creek  
-##                                           8.930e-02  
+##                                           5.970e-02  
 ##                                NeighborhoodOld_Town  
-##                                          -6.539e-02  
+##                                          -6.793e-02  
 ##                                 NeighborhoodEdwards  
-##                                          -9.178e-02  
+##                                          -1.089e-01  
 ##                                NeighborhoodSomerset  
-##                                           1.694e-01  
+##                                           1.595e-01  
 ##                      NeighborhoodNorthridge_Heights  
-##                                           2.816e-01  
+##                                           2.721e-01  
 ##                                 NeighborhoodGilbert  
-##                                           6.931e-02  
+##                                           7.492e-02  
 ##                                  NeighborhoodSawyer  
-##                                          -6.870e-02  
+##                                          -8.944e-02  
 ##                          NeighborhoodNorthwest_Ames  
-##                                           8.707e-02  
+##                                           8.449e-02  
 ##                             NeighborhoodSawyer_West  
-##                                           3.208e-02  
+##                                           6.643e-03  
 ##                                NeighborhoodMitchell  
-##                                           1.034e-01  
+##                                           9.704e-02  
 ##                               NeighborhoodBrookside  
-##                                          -5.795e-02  
+##                                          -6.057e-02  
 ##                                NeighborhoodCrawford  
-##                                           1.538e-01  
+##                                           1.321e-01  
 ##                  NeighborhoodIowa_DOT_and_Rail_Road  
-##                                          -1.562e-01  
+##                                          -1.505e-01  
 ##                              NeighborhoodTimberland  
-##                                           2.155e-01  
+##                                           1.934e-01  
 ##                              NeighborhoodNorthridge  
-##                                           2.995e-01  
+##                                           2.907e-01  
 ##                             NeighborhoodStone_Brook  
-##                                           2.783e-01  
+##                                           2.846e-01  
 ## NeighborhoodSouth_and_West_of_Iowa_State_University  
-##                                          -4.751e-02  
+##                                          -4.738e-02  
 ##                             NeighborhoodClear_Creek  
-##                                           6.937e-02  
+##                                           4.196e-02  
 ##                          NeighborhoodMeadow_Village  
-##                                          -9.137e-02  
+##                                          -9.550e-02  
 ##                               NeighborhoodBriardale  
-##                                          -1.271e-01  
+##                                          -1.303e-01  
 ##                     NeighborhoodBloomington_Heights  
-##                                           1.086e-01  
+##                                           1.098e-01  
 ##                                 NeighborhoodVeenker  
-##                                           1.878e-01  
+##                                           1.663e-01  
 ##                         NeighborhoodNorthpark_Villa  
-##                                           4.285e-03  
+##                                           3.361e-03  
 ##                                 NeighborhoodBlueste  
-##                                           2.027e-02  
+##                                           1.163e-02  
 ##                                  NeighborhoodGreens  
-##                                           1.271e-01  
+##                                           1.097e-01  
 ##                             NeighborhoodGreen_Hills  
-##                                           3.741e-01  
+##                                           2.065e-01  
 ##                                NeighborhoodLandmark  
-##                                          -4.665e-02  
+##                                          -6.974e-02  
 ##                                           Year_Sold  
-##                                          -3.332e-03
+##                                          -2.436e-03
 ```
 
 ---
@@ -1089,14 +1059,168 @@ ames_test_preds &lt;- models %&gt;%
 ggplot(aes(x = log10(Sale_Price), y = pred), 
        data = ames_test_preds) + 
   geom_point() + facet_wrap(~model_name) + 
-  coord_fixed()
+  coord_fixed() + 
+  ggtitle("Test Set Predictions")
 ```
 
 &lt;img src="Slides_files/figure-html/unnamed-chunk-50-1.png" width="100%" /&gt;
 
 
+
 ---
-##
+
+## Cross-Validation
+
+
+```r
+ames_train_1var &lt;- select(ames_train, Sale_Price, Gr_Liv_Area)
+ames_cv &lt;- vfold_cv(ames_train_1var, v = 30, strata = "Sale_Price", breaks = 8)
+ames_cv[1,]
+```
+
+```
+## # A tibble: 1 x 2
+##   splits            id    
+## * &lt;named list&gt;      &lt;chr&gt; 
+## 1 &lt;split [2.5K/92]&gt; Fold01
+```
+
+```r
+ames_cv$splits[[1]]
+```
+
+```
+## &lt;2547/92/2639&gt;
+```
+
+---
+## Cross-Validation
+
+```r
+analysis(ames_cv$splits[[1]])
+```
+
+```
+## # A tibble: 2,547 x 2
+##    Sale_Price Gr_Liv_Area
+##         &lt;int&gt;       &lt;int&gt;
+##  1     215000        1656
+##  2     172000        1329
+##  3     244000        2110
+##  4     189900        1629
+##  5     195500        1604
+##  6     213500        1338
+##  7     191500        1280
+##  8     236500        1616
+##  9     189000        1804
+## 10     175900        1655
+## # … with 2,537 more rows
+```
+
+```r
+assessment(ames_cv$splits[[1]])
+```
+
+```
+## # A tibble: 92 x 2
+##    Sale_Price Gr_Liv_Area
+##         &lt;int&gt;       &lt;int&gt;
+##  1     149900        1078
+##  2     230000        1492
+##  3     172500        1556
+##  4     242000        2978
+##  5     236000        1949
+##  6     318000        1978
+##  7      90000         960
+##  8      55993        1044
+##  9     246000        1646
+## 10     128000        1180
+## # … with 82 more rows
+```
+
+---
+
+## Cross-Validation
+
+
+```r
+# Create our model fitting function
+ames_lm &lt;- function(cv) {
+  lm(formula = log10(Sale_Price) ~ Gr_Liv_Area,
+     data = as.data.frame(cv))
+}
+
+ames_cv_lm &lt;- ames_cv %&gt;% 
+  # map takes each set and applies a function
+  mutate(model = purrr::map(splits, ames_lm)) %&gt;%
+  # get out the coefficients
+  mutate(coefs = purrr::map(model, "coefficients"),
+         slope = purrr::map_dbl(coefs, "Gr_Liv_Area"),
+         intercept = purrr::map_dbl(coefs, "(Intercept)"))
+```
+
+---
+## Cross-Validation - Parameter Estimate Error
+
+
+```r
+ggplot(data = ames_cv_lm) + 
+  geom_histogram(aes(x = slope)) + 
+  ggtitle("Cross-Validated Slope Values")
+```
+
+&lt;img src="Slides_files/figure-html/unnamed-chunk-55-1.png" width="50%" /&gt;
+
+---
+## Cross-Validation
+
+
+```r
+ames_loess &lt;- function(cv) {
+  loess(Sale_Price ~ Gr_Liv_Area, 
+        data = analysis(cv))
+}
+
+# Make a table of possible predictive values
+output_range &lt;- tibble(
+  Gr_Liv_Area = min(ames$Gr_Liv_Area):max(ames$Gr_Liv_Area)
+) 
+
+# Get regression lines and assessment set predictions
+ames_cv_loess &lt;- ames_cv %&gt;% 
+  mutate(
+    model = purrr::map(splits, ames_loess),
+    pred_line = purrr::map(model, ~bind_cols(
+      output_range, 
+      pred = predict(., newdata = output_range))),
+    pred_assessment = purrr::map2(
+      model, splits, ~bind_cols(
+        assessment(.y), 
+        pred = predict(.x, newdata = assessment(.y))))
+  )
+```
+
+---
+## Cross-Validation - Model Variability
+
+
+```r
+select(ames_cv_loess, id, pred_line) %&gt;%
+  unnest() %&gt;%
+  ggplot() + 
+  geom_point(aes(x = Gr_Liv_Area, y = Sale_Price), 
+             data = ames_train_1var, 
+             color = "red", alpha = .2) + 
+  geom_line(aes(x = Gr_Liv_Area, y =  pred, group = id), 
+            alpha = .1) + 
+  scale_y_log10(breaks = c(50000, 100000, 150000, 300000, 500000))
+```
+
+```
+## Warning: Removed 620 rows containing missing values (geom_path).
+```
+
+![](Slides_files/figure-html/unnamed-chunk-57-1.png)&lt;!-- --&gt;
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
