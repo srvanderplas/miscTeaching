@@ -900,7 +900,15 @@ rf_model &lt;- rand_forest(mode = "regression") %&gt;%
                        # how the model is fit
 linear_model &lt;- linear_reg() %&gt;% 
   set_engine("lm")
+```
 
+Parsnip separates out the model fitting function, allowing for easy model comparisons and the fitting of multiple models. 
+
+---
+## Parsnip
+
+
+```r
 models &lt;- tibble::tibble(
   model_name = c("random_forest", "linear_regression"), 
   model_fcn = list(rf_model, linear_model)) %&gt;%
@@ -941,8 +949,8 @@ models$res[[1]]
 ## Target node size:                 5 
 ## Variable importance mode:         none 
 ## Splitrule:                        variance 
-## OOB prediction error (MSE):       0.00836771 
-## R squared (OOB):                  0.7352824
+## OOB prediction error (MSE):       0.008349873 
+## R squared (OOB):                  0.7358467
 ```
 
 ---
@@ -1063,9 +1071,41 @@ ggplot(aes(x = log10(Sale_Price), y = pred),
   ggtitle("Test Set Predictions")
 ```
 
-&lt;img src="Slides_files/figure-html/unnamed-chunk-50-1.png" width="100%" /&gt;
+&lt;img src="Slides_files/figure-html/unnamed-chunk-51-1.png" width="100%" /&gt;
+
+---
+## Parsnip
+
+You can even fit a bunch of models with different predictors:
 
 
+```r
+bunch_of_models &lt;- tibble(variable = names(select(ames_train, -Sale_Price)),
+       formula = paste("log10(Sale_Price) ~", variable) %&gt;% purrr::map(as.formula)) %&gt;%
+  mutate(model = purrr::map(formula, ~lm(., data = ames_train)),
+         msum = purrr::map(model, summary),
+         rsq = purrr::map_dbl(msum, "adj.r.squared"),
+         df = purrr::map_int(model, "rank")) %&gt;%
+  arrange(desc(rsq))
+bunch_of_models
+```
+
+```
+## # A tibble: 80 x 6
+##    variable      formula   model  msum         rsq    df
+##    &lt;chr&gt;         &lt;list&gt;    &lt;list&gt; &lt;list&gt;     &lt;dbl&gt; &lt;int&gt;
+##  1 Overall_Qual  &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.691    10
+##  2 Neighborhood  &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.577    28
+##  3 Gr_Liv_Area   &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.486     2
+##  4 Bsmt_Qual     &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.486     6
+##  5 Exter_Qual    &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.473     4
+##  6 Garage_Cars   &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.458     2
+##  7 Kitchen_Qual  &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.454     5
+##  8 Garage_Area   &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.429     2
+##  9 Total_Bsmt_SF &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.389     2
+## 10 Year_Built    &lt;formula&gt; &lt;lm&gt;   &lt;smmry.lm&gt; 0.379     2
+## # … with 70 more rows
+```
 
 ---
 ## Your Turn
@@ -1073,28 +1113,6 @@ ggplot(aes(x = log10(Sale_Price), y = pred),
 
 ```r
 lego &lt;- read_csv("http://bit.ly/ds303-lego")
-```
-
-```
-## Parsed with column specification:
-## cols(
-##   set_num = col_character(),
-##   name = col_character(),
-##   year = col_double(),
-##   theme = col_character(),
-##   subtheme = col_character(),
-##   pieces = col_double(),
-##   minifigs = col_double(),
-##   usretailprice = col_double(),
-##   rating = col_double(),
-##   reviewcount = col_double(),
-##   agemin = col_double(),
-##   agemax = col_double(),
-##   outside_brand = col_logical(),
-##   baby = col_logical(),
-##   education = col_logical(),
-##   broad_theme = col_character()
-## )
 ```
 
 The Lego dataset contains data from brickset.com about the US retail price, number of pieces, theme, and other characteristics of lego sets. 
@@ -1170,10 +1188,10 @@ assessment(ames_cv$splits[[1]])
 ##  4     242000        2978
 ##  5     236000        1949
 ##  6     318000        1978
-##  7      90000         960
-##  8      55993        1044
+##  7     107000        1117
+##  8     102776        1178
 ##  9     246000        1646
-## 10     128000        1180
+## 10     124500         882
 ## # … with 82 more rows
 ```
 
@@ -1186,7 +1204,7 @@ assessment(ames_cv$splits[[1]])
 # Create our model fitting function
 ames_lm &lt;- function(cv) {
   lm(formula = log10(Sale_Price) ~ Gr_Liv_Area,
-     data = as.data.frame(cv))
+     data = analysis(cv))
 }
 
 ames_cv_lm &lt;- ames_cv %&gt;% 
@@ -1208,7 +1226,7 @@ ggplot(data = ames_cv_lm) +
   ggtitle("Cross-Validated Slope Values")
 ```
 
-&lt;img src="Slides_files/figure-html/unnamed-chunk-56-1.png" width="50%" /&gt;
+&lt;img src="Slides_files/figure-html/unnamed-chunk-57-1.png" width="50%" /&gt;
 
 ---
 ## Cross-Validation
@@ -1252,7 +1270,7 @@ select(ames_cv_loess, id, pred_line) %&gt;% unnest() %&gt;%
   scale_y_log10(breaks = c(50000, 100000, 150000, 300000, 500000))
 ```
 
-&lt;img src="Slides_files/figure-html/unnamed-chunk-58-1.png" width="100%" /&gt;
+&lt;img src="Slides_files/figure-html/unnamed-chunk-59-1.png" width="100%" /&gt;
 
 ---
 ## Your Turn

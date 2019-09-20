@@ -758,7 +758,14 @@ rf_model <- rand_forest(mode = "regression") %>%
                        # how the model is fit
 linear_model <- linear_reg() %>% 
   set_engine("lm")
+```
 
+Parsnip separates out the model fitting function, allowing for easy model comparisons and the fitting of multiple models. 
+
+---
+## Parsnip
+
+```{r}
 models <- tibble::tibble(
   model_name = c("random_forest", "linear_regression"), 
   model_fcn = list(rf_model, linear_model)) %>%
@@ -823,7 +830,12 @@ ggplot(aes(x = log10(Sale_Price), y = pred),
   ggtitle("Test Set Predictions")
 ```
 
-```{r, include = F, eval = F}
+---
+## Parsnip
+
+You can even fit a bunch of models with different predictors:
+
+```{r, include = T, eval = T}
 bunch_of_models <- tibble(variable = names(select(ames_train, -Sale_Price)),
        formula = paste("log10(Sale_Price) ~", variable) %>% purrr::map(as.formula)) %>%
   mutate(model = purrr::map(formula, ~lm(., data = ames_train)),
@@ -831,12 +843,13 @@ bunch_of_models <- tibble(variable = names(select(ames_train, -Sale_Price)),
          rsq = purrr::map_dbl(msum, "adj.r.squared"),
          df = purrr::map_int(model, "rank")) %>%
   arrange(desc(rsq))
+bunch_of_models
 ```
 
 ---
 ## Your Turn
 
-```{r}
+```{r, message = F, warning = F}
 lego <- read_csv("http://bit.ly/ds303-lego")
 ```
 
@@ -875,7 +888,7 @@ assessment(ames_cv$splits[[1]])
 # Create our model fitting function
 ames_lm <- function(cv) {
   lm(formula = log10(Sale_Price) ~ Gr_Liv_Area,
-     data = as.data.frame(cv))
+     data = analysis(cv))
 }
 
 ames_cv_lm <- ames_cv %>% 
