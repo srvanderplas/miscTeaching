@@ -1,8 +1,8 @@
 library(tidyverse)
 library(LegoR)
 
-lego_sets <- read_csv("ds303_2019/sets.csv")
-lego_themes <- read_csv("ds303_2019/themes.csv") %>%
+lego_sets <- read_csv("ds303_2019/rebrickable-lego-sets.csv")
+lego_themes <- read_csv("ds303_2019/rebrickable-lego-themes.csv") %>%
   set_names(c("theme_id", "theme_name", "theme_parent"))
 
 lego_sets <- left_join(lego_sets, lego_themes, by = "theme_id")
@@ -43,3 +43,5 @@ write_csv(brickset_sets, "ds303_2019/lego-prices.csv")
 
 ggplot(brickset_sets, aes(x = pieces, y = usretailprice, color = broad_theme)) + geom_point() +
   geom_smooth(method = "lm")
+
+write_csv(sets_df, "ds303_2019/brickset-lego-sets.csv")
