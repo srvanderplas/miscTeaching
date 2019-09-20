@@ -1068,6 +1068,45 @@ ggplot(aes(x = log10(Sale_Price), y = pred),
 
 
 ---
+## Your Turn
+
+
+```r
+lego &lt;- read_csv("http://bit.ly/ds303-lego")
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   set_num = col_character(),
+##   name = col_character(),
+##   year = col_double(),
+##   theme = col_character(),
+##   subtheme = col_character(),
+##   pieces = col_double(),
+##   minifigs = col_double(),
+##   usretailprice = col_double(),
+##   rating = col_double(),
+##   reviewcount = col_double(),
+##   agemin = col_double(),
+##   agemax = col_double(),
+##   outside_brand = col_logical(),
+##   baby = col_logical(),
+##   education = col_logical(),
+##   broad_theme = col_character()
+## )
+```
+
+The Lego dataset contains data from brickset.com about the US retail price, number of pieces, theme, and other characteristics of lego sets. 
+
+- Fit two models using a method of your choice:
+
+    1. Model a set's price as a function of the number of pieces in the set
+    2. Model a set's price as a function of the number of minifigures in the set
+
+- Use regression diagnostics (as discussed Monday/Wednesday) to identify areas of concern in the two models
+
+---
 
 ## Cross-Validation
 
@@ -1169,7 +1208,7 @@ ggplot(data = ames_cv_lm) +
   ggtitle("Cross-Validated Slope Values")
 ```
 
-&lt;img src="Slides_files/figure-html/unnamed-chunk-55-1.png" width="50%" /&gt;
+&lt;img src="Slides_files/figure-html/unnamed-chunk-56-1.png" width="50%" /&gt;
 
 ---
 ## Cross-Validation
@@ -1213,7 +1252,16 @@ select(ames_cv_loess, id, pred_line) %&gt;% unnest() %&gt;%
   scale_y_log10(breaks = c(50000, 100000, 150000, 300000, 500000))
 ```
 
-&lt;img src="Slides_files/figure-html/unnamed-chunk-57-1.png" width="100%" /&gt;
+&lt;img src="Slides_files/figure-html/unnamed-chunk-58-1.png" width="100%" /&gt;
+
+---
+## Your Turn
+
+- Using the lego dataset, re-fit your models using 10-fold cross-validation. 
+
+- Plot the results using a spaghetti plot. 
+
+- How reliable are your model fits?
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({

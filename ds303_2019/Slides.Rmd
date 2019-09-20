@@ -834,6 +834,22 @@ bunch_of_models <- tibble(variable = names(select(ames_train, -Sale_Price)),
 ```
 
 ---
+## Your Turn
+
+```{r}
+lego <- read_csv("http://bit.ly/ds303-lego")
+```
+
+The Lego dataset contains data from brickset.com about the US retail price, number of pieces, theme, and other characteristics of lego sets. 
+
+- Fit two models using a method of your choice:
+
+    1. Model a set's price as a function of the number of pieces in the set
+    2. Model a set's price as a function of the number of minifigures in the set
+
+- Use regression diagnostics (as discussed Monday/Wednesday) to identify areas of concern in the two models
+
+---
 
 ## Cross-Validation
 
@@ -919,3 +935,12 @@ select(ames_cv_loess, id, pred_line) %>% unnest() %>%
   geom_line(aes(x = Gr_Liv_Area, y =  pred, group = id), alpha = .1) + 
   scale_y_log10(breaks = c(50000, 100000, 150000, 300000, 500000))
 ```
+
+---
+## Your Turn
+
+- Using the lego dataset, re-fit your models using 10-fold cross-validation. 
+
+- Plot the results using a spaghetti plot. 
+
+- How reliable are your model fits?

@@ -45,3 +45,6 @@ ggplot(brickset_sets, aes(x = pieces, y = usretailprice, color = broad_theme)) +
   geom_smooth(method = "lm")
 
 write_csv(sets_df, "ds303_2019/brickset-lego-sets.csv")
+
+ggplot(brickset_sets, aes(x = minifigs, y = usretailprice, color = broad_theme)) + geom_point() +
+  geom_smooth(method = "lm")
